@@ -267,7 +267,7 @@
             content.shift()
           }
           content.chunk(8).forEach(line => {
-            tabname = line[1].match(/<span> \[(.*)\]</)[1];
+            tabname = line[1].match(/<span> \[(.*)\]</)[1]
             if(!this.tablist.some((u) => u.tabname === tabname)){
             this.tablist.push({tabname: tabname, visible: true})
             }
@@ -281,6 +281,7 @@
                 list.push(charname)
               }
               this.analizeDice(tabname, charname, line[4])
+              console.log(line[4])
               ary.push({charname: charname})
             }
           })
