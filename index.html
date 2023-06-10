@@ -319,7 +319,6 @@
           content.shift()
         }
         content.chunk(8).forEach(line => {
-          console.log(line[4])
           tabname = line[1].match(/<span> \[(.*)\]</)[1];
           if (!this.tablist.some((u) => u.tabname === tabname)) {
             this.tablist.push({ tabname: tabname, visible: true })
