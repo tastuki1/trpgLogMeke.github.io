@@ -1,1 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>ダイスチェックツール</title>
+  <h1>成長判定</h1>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script type="text/javascript">
+    Array.prototype.chunk = function(n){
+      len = Math.round(this.length/n,10)
+      ret = []
+      for(var i=0;i<len;i++){
+          ret.push( this.slice( i*n, i*n+n )  )
+      }
+      return ret;
+    }
+  </script>
+  <style>
+  @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+  @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
+    html {
+    font-size: 16px;
+    }
+    body {
+      -webkit-text-size-adjust: 100%;
+      background-color: #6b8e23;
+      font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    }
+    h1 {
+      margin: 1rem 2rem 0;
+      color: #ffffff;
+      font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    }
+    h2{
+        margin-bottom: .5rem;
+    }
+    h3{
+        margin: .5rem;
+    }
+    .disp_check{
+      padding-left: .5rem;
+      border-collapse: separate;
+      border-spacing: 0 1rem;
+    }
+    .disp_check th{
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    .disp_check td{
+      display: inline-block;
+    }
+    .value{
+      width: 3rem;
+      white-space: nowrap;
+    }
+    .growth th{
+      white-space: nowrap;
+    }
+    caption{
+      white-space: nowrap;
+      text-align: left;
+    }
+    .box5 {
+      padding: 1rem;
+      margin: 1rem;
+      border: double 5px #6b8e23;
+      background-color: #ffffff;
+    }
+    @media screen and (max-width: 480px){
+      html {
+      font-size: 14px;
+      }
+      h1 {
+        font-size: 30px;
+        margin: .5rem 1rem 0;
+        color: #ffffff;
+        font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+        }
+      .box5{
+        margin: .5rem 1%;
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="box5">
+    <div id="makeLog">
+        確認したいログを選択してください．
+      <br><br>
+        <input type="file" accept="text/html" id="inputFile" @change="readLogFile">
+      <br><br>
+
+    <h2>成長技能チェック</h2>
+    <table class = disp_check>
+        <tr>
+            <th>タブ表示　：</th>
+            <td v-for="tab in tablist">
+                <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
+                <label class="switch-on" :for="tab.tabname">{{ tab.tabname }}</label>
+            </td>
+        </tr>
+        <tr>
+            <th>ダイス表示：</th>
+            <td v-for="label in labels">
+                <input type="checkbox" :id="label.labelname" checked="checked" v-model="label.visible"/>
+                <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
+            </td>
+        </tr>
+        <tr>
+            <th>オプション：</th>
+            <td>
+                <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
+                <label class="switch-on" for= "tabname">タブ名表示</label> 
+            </td>
+            <td>
+                <input type="checkbox" id="value" checked="checked" v-model="value.visible"/>
+                <label class="switch-on" for= "value">出目表示</label>
+            </td>
+            <td>
+                <input type="checkbox" id="status" checked="checked" v-model="status" />
+                <label class="switch-on" for= "status">ステ依存表示</label>
+            </td>
+        </tr>
+    </table> 
+
+    <div id="growth_area">
+      <template v-for="char in character">
+        <template id="growth_character" v-if="result.some((u) => u.charname===char.charname)">
+            <h3>＜{{ char.charname }}＞</h3>
+            <section>
+              <template v-for="label in labels">
+                  <table id="growth" v-if="result.some((u) => u.charname===char.charname && u.label === label.labelname)">
+                      <tbody v-if="label.visible">
+                          <caption>◯{{ label.labelname }}</caption>
+                          <template v-for="line in result.filter((u) => u.charname===char.charname && u.label === label.labelname)">
+                            <template v-if="line.status">
+                              <tr v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                <td  v-if="tabname.visible">[{{ line.tabname }}] </td>
+                                <td class="ginou">{{ line.ginou }}</td>
+                                <td v-if="value.visible">＞ {{ line.value }}</td>
+                              </tr>
+                            </template>
+                            <template v-else>
+                              <tr v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                <td v-if="tabname.visible">[{{ line.tabname }}] </td>
+                                <td class="ginou">{{ line.ginou }}</td>
+                                <td v-if="value.visible">＞ {{ line.value }}</td>
+                              </tr>
+                            </template>
+                          </template>
+                      </tbody>
+                  </table>
+              </template>
+            </section>
+            <br>
+        </template>
+    　</template>
+  </div>
+
+    <button type="button" @click="copy">コピーする</button>
+
+  </div>
+</body>
+<script>
+  var makeLog = new Vue({
+      el: "#makeLog",
+      data: {
+        file: {},
+        result: [],
+        tablist: [],
+        character:[],
+        tabname:{visible:true},
+        value:{visible:true},
+        status:{visible:true},
+        labels:[
+          {labelname: "クリティカル", visible: true},
+          {labelname: "スペシャル", visible: true},
+          {labelname: "ファンブル", visible: true},
+          {labelname: "初期値成功", visible: true}
+        ],
+        copyText:""
+      },
+      methods:{
+        copy(){
+          const copyText = this.$el.querySelector('#growth_area').innerText
+          navigator.clipboard
+            .writeText(copyText)
+            .then(() => {
+              console.log('テキストコピー完了')
+            })
+            .catch(e => {
+              console.error(e)
+            })
+        },
+        analizeDice(tabname, charname, dice){
+          const defaultDice = ["&lt;=25 【キック】","&lt;=25 【組み付き】","&lt;=50 【こぶし（パンチ）】",
+            "&lt;=10 【頭突き】","&lt;=25 【投擲】","&lt;=1 【マーシャルアーツ】","&lt;=20 【拳銃】",
+            "&lt;=15 【サブマシンガン】","&lt;=30 【ショットガン】","&lt;=15 【マシンガン】","&lt;=25 【ライフル】",
+            "&lt;=30 【応急手当】","&lt;=1 【鍵開け】","&lt;=15 【隠す】","&lt;=10 【隠れる】","&lt;=25 【聞き耳】",
+            "&lt;=10 【忍び歩き】","&lt;=10 【写真術】","&lt;=1 【精神分析】","&lt;=10 【追跡】","&lt;=40 【登攀】",
+            "&lt;=25 【図書館】","&lt;=25 【目星】","&lt;=20 【運転】","&lt;=20 【機械修理】",
+            "&lt;=1 【重機械操作】","&lt;=5 【乗馬】","&lt;=25 【水泳】","&lt;=5 【製作】","&lt;=1 【操縦】",
+            "&lt;=25 【跳躍】","&lt;=10 【電気修理】","&lt;=10 【ナビゲート】","&lt;=1 【変装】",
+            "&lt;=5 【言いくるめ】","&lt;=15 【信用】","&lt;=15 【説得】","&lt;=5 【値切り】","&lt;=70 【母国語】",
+            "&lt;=5 【医学】","&lt;=5 【オカルト】","&lt;=1 【化学】","&lt;=0 【クトゥルフ神話】","&lt;=5 【芸術】",
+            "&lt;=10 【経理】","&lt;=1 【考古学】","&lt;=1 【コンピューター】","&lt;=5 【心理学】",
+            "&lt;=1 【人類学】","&lt;=1 【生物学】","&lt;=1 【地質学】","&lt;=1 【電子工学】","&lt;=1 【天文学】",
+            "&lt;=10 【博物学】","&lt;=1 【物理学】","&lt;=5 【法律】","&lt;=1 【薬学】","&lt;=20 【歴史】"]
+          var label = ""
+          var growth = {};
+          var regex = / 【(.*)】 \(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+          if(regex.test(dice)){
+            var res = dice.match(regex)
+            // alert(res)
+            if(dice.match(/決定的成功/)){
+              label = "クリティカル"
+            }else if(dice.match(/スペシャル/)){
+              label = "スペシャル"
+            }else if(dice.match(/致命的失敗/)){
+              label = "ファンブル"
+            }else if(dice.match(/成功|スペシャル/)&&dice.match(/&lt;=\d+ 【.*】/)){
+              var judge = dice.match(/&lt;=\d+ 【.*】/)
+              if(judge&&defaultDice.includes(judge[0])){
+                label = "初期値成功"
+              }
+            }
+            if(label!=""){
+              var s_regex = /SAN値チェック|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
+              if(s_regex.test(dice)){
+                this.result.push({charname:charname, tabname: tabname, label: label, ginou: res[1], value: res[2], status: true})
+              }else{
+                this.result.push({charname:charname, tabname: tabname, label: label, ginou: res[1], value: res[2], status: false})
+              }
+            }
+          }
+        },
+        readLogFile: function(e){
+          this.result=[]
+          this.tablist=[]
+          this.character=[]
+          const files = e.target.files
+          this.file = files[0]
+          this.logFileName=this.file.name.replace(/\[.+\]\.html/,"")
+          var reader = new FileReader()
+          reader.readAsText(this.file)
+          // ファイル読み込み完了時の処理
+          reader.onload = () => {
+            var content = reader.result.split(/\n/)
+            this.readLog(content)
+            alert("ファイル読み込み完了")
+          }
+          // ファイル読み込みエラー時の処理
+          reader.onerror = () => {
+            alert("ファイル読み込みエラー")
+          }
+        },
+
+        readLog(content)　{
+          var charname, style, color, tabname = ""
+          list= ["system"]
+          ary=[]
+          for (var i = 0; i < 10; i++) {
+            content.shift()
+          }
+          content.chunk(8).forEach(line => {
+            tabname = line[1].match(/<span> \[(.*)\]</)[1];
+            if(!this.tablist.some((u) => u.tabname === tabname)){
+            this.tablist.push({tabname: tabname, visible: true})
+            }
+            if(line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)){
+              charname = line[2].match(/>(.*)</)[1].replace(/\s/,"　").replace(/\:/,"：").replace(/&lt;/,"＜").replace(/&gt;/,"＞")
+              if(list.includes(charname)){
+                style =  "character"
+                ary = ary.filter(item => item.charname != charname)
+              }else{
+                style =  "item"
+                list.push(charname)
+              }
+              this.analizeDice(tabname, charname, line[4])
+              ary.push({charname: charname})
+            }
+          })
+          this.character=ary.sort((a, b) => {
+            if (a.charname < b.charname) return -1;
+            if (a.charname > b.charname) return 1;
+            return 0
+          })
+        }
+      }
+    })
+</script>
+</html>
 
