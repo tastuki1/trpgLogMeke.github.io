@@ -8,10 +8,8 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <!-- <script type="module" src="log_template.js"></script> -->
-    <script type="module" src="log_template.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script> -->
     <script type="text/javascript">
-        import { makeLogHtml } from "log_template";
         Array.prototype.chunk = function (n) {
             len = Math.round(this.length / n, 10)
             ret = []
@@ -20,45 +18,52 @@
             }
             return ret;
         }
-        function readTemplate(filename){
-            const xhr = new XMLHttpRequest();
-            var data;
-            xhr.open('GET', './basefile.txt', true);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        result.textContent = '';
-                        let lines = xhr.responseText.split('\n');
-                        let line = '';
-                        for(i = 0; i < lines.length; i++) {
-                        line += lines[i] + '<br />';
-                        }
-                        result.insertAdjacentHTML('afterbegin', line);
-                    } else {
-                        result.textContent = '通信エラーが発生';
-                    }
-                } else {
-                    result.textContent = '通信中...';
+        //x回ダイスへの対応用メソッド
+        function readRegex(str) {
+            const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
+            const omikuji_regex_g =/今日のあなたの運勢は……？ \n【.*】/g
+            if (str.match(log_regex_g)) {
+                res = str.match(log_regex_g)
+                for (let r of res) {
+                alert(r)
+                r_new = r.split("\n").join('<br>')
+                alert(r_new)
+                str = str.replace(r, r_new)
+                }
+            }else if (str.match(omikuji_regex_g)){
+                res = str.match(omikuji_regex_g)
+                for (let r of res) {
+                alert(r)
+                r_new = r.split("\n").join('<br>')
+                alert(r_new)
+                str = str.replace(r, r_new)
                 }
             }
-            alert(lines)
-            window.onload = function onLoad() {
-            xhr.open('GET', 'filename', false); // GETでローカルファイルを開く
-            xhr.onload = () => {
-                data = xhr.responseText;
-            };
-            xhr.onerror = () => {
-                console.log("error!");
-            };
-            }
+            return str
         }
         function logFileData() {
             var result = window.confirm("ダウンロードしますか？");
             if (result) {
                 // const copyText = this.$el.querySelector('#contentText').innerHTML
-                const template = ("./basefile.txt");
-                alert(template)
-                const copyText =  document.getElementById('contentText').innerHTML
+                // // const templateFile = ("./basefile.txt");
+                // var reader = new FileReader()
+                // // reader.readAsText(templateFile)
+                // reader.onload = () => {
+                //     var template = reader.result
+                //     alert(template)
+                //     const copyText =  document.getElementById('contentText').innerHTML
+                //     const blob = new Blob([copyText], { type: "text/plain" });
+                //     const link = document.createElement('a');
+                //     link.href = URL.createObjectURL(blob);
+                //     link.download = 'logtest.html';
+                //     link.click();
+                // }
+                // // ファイル読み込みエラー時の処理
+                // reader.onerror = () => {
+                //     alert("ファイル読み込みエラー")
+                // }
+                const copyText =  document.getElementById('contentText').innerHTML.split("><").join(">\n<")
+                alert(copyText)
                 const blob = new Blob([copyText], { type: "text/plain" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -280,8 +285,9 @@
                         </template>
                     </template>
                     <br>
-                    <button type="button" @click="copy">結果をコピー</button>
                     <br>
+                </div>
+                <button type="button" @click="copy">結果をコピー</button>
             </details>
 
             <br><br>
@@ -382,14 +388,10 @@
       <div :class="tab.tabname">
         <template v-for="con in tab.value">
         <p :class="con.charname">
-          <b v-html="con.charname"></b><br>
+          <b v-html="con.charname"></b> <br>
           <template v-for="c in con.line">
-            <span v-if="Object.keys(c.dice).length">
-                <p><span :style="c.dice" v-html="c.content"><br></span></p>
-            </span>
-            <span v-else>
-                <p v-html="c.content"><br></p>
-            </span>
+            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
+            <span v-else v-html="c.content"><br></span>
           </template>
         </p>
         </template>
@@ -545,10 +547,16 @@
                 this.logFileName = this.file.name.replace(/\[.+\](.*)/, "").replace(/\.html/, "")
                 var reader = new FileReader()
                 reader.readAsText(this.file)
+                // reader.readAsDataURL(this.file)
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
-                    var content = reader.result.split(/\n/)
+                    var content = reader.result
+                    // var matches = content.querySelectorAll("p");
+                    // alert(matches)
+                    content = readRegex(content).split(/\n/)
                     this.readLog(content)
+                    // console.log(file_reader.result);
+                    alert("ファイル読み込み完了")
                 }
                 // ファイル読み込みエラー時の処理
                 reader.onerror = () => {
@@ -587,7 +595,6 @@
                         ary.push({ charname: charname, style: style, color: color })
                     }
                 })
-                //   this.component=JSON.stringify(this.component)
                 this.character = ary.sort((a, b) => {
                     if (a.style < b.style) return -1;
                     if (a.style > b.style) return 1;
@@ -596,20 +603,16 @@
                     return 0
                 })
             },
-            downloadData: function (e) {
-                let template = ``
-                template = makelog()
-                var result = window.confirm("ダウンロードしますか？");
-                if (result) {
-                    const blob = new Blob([template], { type: "text/plain" });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'logtest.html';
-                    link.click();
-                    //   var elem = document.getElementById('logFileDownload');
-                    // // 送信
-                    // elem.submit();
-                }
+            // downloadData: function (e) {
+            //     let template = ``
+            //     template = makelog()
+            //     var result = window.confirm("ダウンロードしますか？");
+            //     if (result) {
+            //         const blob = new Blob([template], { type: "text/plain" });
+            //         const link = document.createElement('a');
+            //         link.href = URL.createObjectURL(blob);
+            //         link.download = 'logtest.html';
+            //         link.click();
             // },
             // makeContent() {               
             //     let template = ``
@@ -625,7 +628,7 @@
             //         // // 送信
             //         // elem.submit();
             //     }
-            }
+            // }
         }
     })
 </script>
