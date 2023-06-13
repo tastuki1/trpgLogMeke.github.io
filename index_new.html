@@ -8,9 +8,16 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/puppeteer@20.7.0/install.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script>
     <script type="text/javascript">
+        Array.prototype.chunk = function (n) {
+            len = Math.round(this.length / n, 10)
+            ret = []
+            for (var i = 0; i < len; i++) {
+                ret.push(this.slice(i * n, i * n + n))
+            }
+            return ret;
+        }
         //x回ダイスへの対応用メソッド
         function readRegex(str) {
             const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
