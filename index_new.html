@@ -8,9 +8,41 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
-    <script type="module">import puppeteer from 'https://cdn.jsdelivr.net/npm/puppeteer@20.7.0/+esm'</script>
+    <script src="https://cdn.jsdelivr.net/npm/puppeteer@20.7.0/install.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script>
     <script type="text/javascript">
+        scraping = function (e) {
+
+            const files = e.target.files
+            var file = files[0]
+            var logFileName = file.name
+
+            const file = fs.readFileSync(logFileName)
+            // 本当はiconvもpuppeteerに任せたかったが、ちょっと難しそうで断念
+            const encoded = iconv.decode(file, "ShiftJIS").toString()
+
+            // ブラウザをセットアップ
+            const browser = await puppeteer.launch()
+            const page = await browser.newPage()
+            // ページを設定
+            await page.setContent(encoded.toString())
+
+            // スクレイピング
+            const item = await page.$('p')
+            console.log(await (await item.getProperty('innerHTML')).jsonValue())
+            console.log('--------------------------------------')
+            console.log(await (await item.getProperty('textContent')).jsonValue())
+            // const table = await page.$("table")
+            // const trs = await table.$$("tr")
+            // const data = await Promise.all( trs.map(async tr => {
+            // return await tr.$$eval("td", (nodes) => {
+            //     // このクロージャ内部はchrome側で実行される
+            //     return nodes.map(node => node.innerText)
+            // })
+            // }))
+            browser.close()
+
+        }
         Array.prototype.chunk = function (n) {
             len = Math.round(this.length / n, 10)
             ret = []
@@ -19,6 +51,7 @@
             }
             return ret;
         }
+
         //x回ダイスへの対応用メソッド
         function readRegex(str) {
             const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
