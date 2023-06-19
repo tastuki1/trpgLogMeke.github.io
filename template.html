@@ -1,0 +1,31 @@
+str = `<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <title>{{ logFileName }}</title>
+        <meta charset="UTF-8">
+        <script type="text/javascript">
+            function c_disp(obj, name) {
+                const title =document.getElementsByClassName(name)
+                for ( let i = 0; i < title.length; i ++ ){
+                if ( obj.checked == true) {
+                    title[i].style.display = 'block';
+                } else {
+                    title[i].style.display = 'none';
+                }
+                }
+            }
+    </script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        {{ style }}
+    </head>
+    <body>
+        <div class="header">
+            <h1>{{ logFileName }}</h1>
+            {{ viewCheck }}
+        </div>
+        <div class="box5">
+            {{ content }}
+        </div>
+    </body>
+</html>`

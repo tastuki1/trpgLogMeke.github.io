@@ -8,7 +8,7 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script> -->
+    <script type="text/javascript" src="./test.js"></script>
     <script type="text/javascript">
         Array.prototype.chunk = function (n) {
             len = Math.round(this.length / n, 10)
@@ -62,8 +62,15 @@
                 // reader.onerror = () => {
                 //     alert("ファイル読み込みエラー")
                 // }
-                const copyText =  document.getElementById('contentText').innerHTML.split("><").join(">\n<")
+                const content =  document.getElementById('contentText').innerHTML.split("><").join(">\n<")
+                const logFileName = document.getElementsByName('logFileName')[0].value
+                const nameColor = document.getElementsByName('nameColor')[0].value
+                const backColor = document.getElementsByName('backColor')[0].value
+                const viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<")
+
+                copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
                 alert(copyText)
+                // alert(str)
                 const blob = new Blob([copyText], { type: "text/plain" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -177,7 +184,7 @@
             color: #fff;
         }
 
-        .雑談 {
+        /* .雑談 {
             position: relative;
             margin: .5rem 0;
             padding: .5rem 0rem .5rem 1rem;
@@ -185,11 +192,42 @@
             box-sizing: border-box;
             background: #f5f5f5;
             border-left: 3px solid #888888;
+        } */
+
+        .tab {
+            position: relative;
+            margin: .5rem 0;
+            padding: .5rem 0rem .5rem 1rem;
+            box-sizing: border-box;
+            background: #f5f5f5;
+            overflow-wrap: break-word;
         }
 
-        .box5 .雑談 p {
+        .メイン {
+            position: relative;
+            margin: .5rem 0;
+            padding: .5rem 0rem .5rem 1rem;
+            overflow-wrap: break-word;
+        }
+
+        /* .tab p{
+            margin-left: .5rem;
+            text-indent: -.5rem;
+        } */
+
+        /* .box5 .雑談 p {
             margin: 0;
             padding: .5rem;
+        } */
+
+        p.char {
+            margin-left: .5rem;
+            text-indent: -.5rem;
+        }
+
+        span {
+            display:inline-block;
+            margin: .5rem 1rem .2rem .5rem;
         }
 
         @media screen and (max-width: 480px) {
@@ -299,7 +337,7 @@
                     <tr>
                         <td>ログ名</td>
                         <td>
-                            <input type="text" name="logFileName" :value="logFileName" />
+                            <input type="text" name="logFileName" v-model="logFileName" />
                         <td>
                     </tr>
                     <tr>
@@ -328,7 +366,7 @@
                         <tr v-if="tab.tabname!=='メイン' && tab.tabname!=='情報'">
                             <td v-html="tab.tabname"></td>
                             <td>
-                                <input type="color" name="tablist[][color]" :value="tab.color" />
+                                <input type="color" name="tablist[][color]" v-model="tab.color" />
                             </td>
                         </tr>
                     </template>
@@ -346,35 +384,81 @@
                         <td width="40%" v-html="user.charname"></td>
                         <td width="35%">
                             <div class="sample">
-                                <input type="radio" :id="user.charname+'_char'" :name="'character['+index+'][style]'"
-                                    :checked="user.style==='character'" value="character" />
+                                <input type="radio" :id="user.charname+'_char'" value="character" v-model="user.style"/>
                                 <label class="switch-on" :for="user.charname+'_char'"
                                     style="display: inline-block;">人物</label>
-                                <input type="radio" :id="user.charname+'_item'" :name="'character['+index+'][style]'"
-                                    :checked="user.style==='item'" value="item" />
+                                <input type="radio" :id="user.charname+'_item'"   value="item" v-model="user.style"/>
                                 <label class="switch-on" :for="user.charname+'_item'"
                                     style="display: inline-block;">情報</label>
-                                <input type="radio" :id="user.charname+'_scene'" :name="'character['+index+'][style]'"
-                                    :checked="user.style==='scene'" value="scene" />
+                                <input type="radio" :id="user.charname+'_scene'" value="scene" v-model="user.style"/>
                                 <label class="switch-on" :for="user.charname+'_scene'"
                                     style="display: inline-block;">シーン</label>
                             </div>
                         </td>
                         <td width="15%">
-                            <input type="color" :name="'character['+index+'][color]'" :value="user.color" />
+                            <input type="color" v-model="user.color"/>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <br><br>
-
+<!-- 
             <div id="contentText" style="display: none;">
                 <log v-for="tab in component"
                     v-bind:key="tab.id"
                     v-bind:tab="tab">
                 </log>
-            </div>
+            </div> -->
 
+            <div id="viewCheckText">
+                <div class="viewCheck">
+                <template v-for="tab in tablist">
+                    <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報|雑談/)">
+                        <input type="checkbox" id="tab.tabname" checked="checked" :onchange="'c_disp(this, '+tab.tabname+'+)'"/>
+                        <span v-html="tab.tabname"></span>
+                    </label>
+                </template>
+                </div>
+            </div>
+              
+            <!-- <div id="contentText" style="display: none;"> -->
+            <div id="contentText" style="display: none;">
+                <div v-for="tab in component" :style = "'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color" >
+                    <div :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : 'tab tab.tabname'" :id="tab.tabname">
+                        <template v-for="con in tab.value">
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
+                        <!-- <p :class="(con.charname!=='KP'||(tab.tabname!=='メイン'&&tab.tabname!=='情報'))&&con.charname!=='' ? 'char' : 'KP'" :style = "'color:'+character.find((u) => u.charname === con.charname).color"> -->
+                        <p class="char" :style = "'color:'+character.find((u) => u.charname === con.charname).color">
+                            <b v-html="con.charname"  v-if="con.charname!==''"></b><br>
+                            <template v-for="c in con.line">
+                            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
+                            <span v-else v-html="c.content"><br></span><br>
+                            </template>
+                        </p>
+                        <!-- <p class="KP" v-else>
+                            <template v-for="c in con.line">
+                            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
+                            <span v-else v-html="c.content"><br></span>
+                            <br>
+                            </template>
+                        </p> -->
+                        </template>
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
+                        <div class="box">
+                            <span class="box-title" v-html="con.charname"></span>
+                            <p>
+                                <template v-for="c in con.line">
+                                <span v-html="c.content"><br></span>
+                                <br>
+                                </template>
+                            </p>
+                        </div>
+                        </template>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            
             <!-- <button @click="copy2">ダウンロード</button> -->
             <button onclick="logFileData()">ダウンロード</button>
             
@@ -382,22 +466,42 @@
     </div>
 </body>
 <script>
- Vue.component('log', {
-   props:['tab'],
-    template: `
-      <div :class="tab.tabname">
-        <template v-for="con in tab.value">
-        <p :class="con.charname">
-          <b v-html="con.charname"></b> <br>
-          <template v-for="c in con.line">
-            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
-            <span v-else v-html="c.content"><br></span>
-          </template>
-        </p>
-        </template>
-      </div>
-    `
-  })
+//  Vue.component('log', {
+//    props:['tab'],
+//     template: `
+//     <div class="tab tab.tabname" :id="tab.tabname">
+//         <template v-for="con in tab.value">
+//         <template :v-if="character.find((u) => u.charname === con.charname)[0].style==='character'">
+//         <p class="char con.charname" v-if="con.charname!=='KP'||tab.tabname!=='メイン|情報'">
+//             <b v-html="con.charname"></b><br>
+//             <template v-for="c in con.line">
+//             <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
+//             <span v-else v-html="c.content"><br></span><br>
+//             </template>
+//         </p>
+//         <p class="KP" v-else>
+//             <template v-for="c in con.line">
+//             <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
+//             <span v-else v-html="c.content"><br></span>
+//             <br>
+//             </template>
+//         </p>
+//         </template>
+//         <template :v-if="character.filter((u) => u.charname === con.charname)[0].style==='item'">
+//         <div class="box">
+//             <span class="box-title" v-html="con.charname"></span>
+//             <p>
+//                 <template v-for="c in con.line">
+//                 <span v-html="c.content"><br></span>
+//                 <br>
+//                 </template>
+//             </p>
+//         </div>
+//         </template>
+//         </template>
+//     </div>
+//     `
+//   })
 
     var makeLog = new Vue({
         el: "#makeLog",
@@ -409,7 +513,7 @@
             file: {},
             component: [],
             result: [],
-            tablist: {},
+            tablist: [],
             character: [],
             tabname: { visible: true },
             value: { visible: true },
@@ -539,7 +643,7 @@
             },
             readLogFile: function (e) {
                 this.result = []
-                this.tablist = []
+                this.tablist = [{tabname: "メイン", color: "#ffffff", visible: true},{tabname: "情報", color: "#ffffff", visible: true}]
                 this.character = []
                 this.component = []
                 const files = e.target.files
@@ -551,8 +655,6 @@
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
                     var content = reader.result
-                    // var matches = content.querySelectorAll("p");
-                    // alert(matches)
                     content = readRegex(content).split(/\n/)
                     this.readLog(content)
                     // console.log(file_reader.result);
