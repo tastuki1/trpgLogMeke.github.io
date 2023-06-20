@@ -32,6 +32,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
   }
   h3 {
     margin: .5rem;
+    style="color:#707070"
   }
   .viewCheck{
     padding-left: 3rem;

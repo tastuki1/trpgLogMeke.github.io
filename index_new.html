@@ -216,31 +216,41 @@
                         <tr>
                             <th>タブ表示　：</th>
                             <td v-for="tab in tablist">
-                                <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
-                                <label class="switch-on" :for="tab.tabname" v-html="tab.tabname"></label>
+                                <label class="switch-on" :for="tab.tabname">
+                                    <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
+                                    <span v-html="tab.tabname"></span>
+                                </label>
                             </td>
                         </tr>
                         <tr>
                             <th>ダイス表示：</th>
                             <td v-for="label in labels">
-                                <input type="checkbox" :id="label.labelname" checked="checked"
-                                    v-model="label.visible" />
-                                <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
+                                <label class="switch-on" :for="label.labelname">
+                                    <input type="checkbox" :id="label.labelname" checked="checked"
+                                        v-model="label.visible" />
+                                    {{ label.labelname }}
+                                </label>
                             </td>
                         </tr>
                         <tr>
                             <th>オプション：</th>
                             <td>
-                                <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
-                                <label class="switch-on" for="tabname">タブ名表示</label>
+                                <label class="switch-on" for="tabname">
+                                    <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
+                                    タブ名表示
+                                </label>
                             </td>
                             <td>
-                                <input type="checkbox" id="value" checked="checked" v-model="value.visible" />
-                                <label class="switch-on" for="value">出目表示</label>
+                                <label class="switch-on" for="value">
+                                    <input type="checkbox" id="value" checked="checked" v-model="value.visible" />
+                                    出目表示
+                                </label>
                             </td>
                             <td>
-                                <input type="checkbox" id="status" checked="checked" v-model="status.visible" />
-                                <label class="switch-on" for="status">ステ依存表示</label>
+                                <label class="switch-on" for="status">
+                                    <input type="checkbox" id="status" checked="checked" v-model="status.visible" />
+                                    ステ依存表示
+                                </label>
                             </td>
                         </tr>
                     </table>
@@ -389,7 +399,7 @@
                         <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
                             <div class="box">
                                 <span class="box-title" v-html="con.charname"></span>
-                                <p class="char" style="color:#707070">
+                                <p>
                                     <template v-for="c in con.line">
                                         <span v-html="c.content"><br></span>
                                         <br>
@@ -399,7 +409,7 @@
                         </template>
                         <template v-if="character.find((u) => u.charname === con.charname).style==='scene'">
                             <h3 v-html="con.charname"></h3>
-                            <p >
+                            <p class="char" style="color:#707070">
                                 <template v-for="c in con.line">
                                     <span v-html="c.content"><br></span>
                                     <br>
