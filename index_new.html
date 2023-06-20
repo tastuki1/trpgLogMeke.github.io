@@ -467,6 +467,7 @@
                 navigator.clipboard
                     .writeText(copyText)
                     .then(() => {
+                        alert('テキストコピー完了')
                         console.log('テキストコピー完了')
                     })
                     .catch(e => {
