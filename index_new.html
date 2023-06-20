@@ -121,17 +121,18 @@
 
         details {
             padding: 1rem;
+            background-color: #e6ece3;
+            border-left: 3px solid #6b8e23;
         }
 
         .growth_box {
-            margin: 1rem;
-            padding: 1rem;
-            background-color: #e7f3e3;
-
+            /* margin: 1rem; */
+            padding: .5rem;
+            /* padding-top: 0rem; */
         }
 
         .box5 {
-            padding: 1rem;
+            padding: 1.5rem;
             margin: 1rem;
             border: double 5px #6b8e23;
             background-color: #ffffff;
@@ -187,14 +188,15 @@
             }
 
             .box5 {
-                margin: 1rem;
-                padding: 0.5rem;
+                margin: .5rem;
+                padding: 1rem;
             }
-            .sample label {
-            width: 2rem;
-            padding: .3rem;
 
-        }
+            .sample label {
+                width: 2rem;
+                padding: .5rem .2rem;
+
+            }
         }
     </style>
 </head>
@@ -205,79 +207,81 @@
             整形したいログを選択してください．
             <br><br>
             <input type="file" accept="text/html" id="inputFile" @change="readLogFile">
-            <br><br>
+            <br><br><br>
 
             <details>
                 <summary>成長技能チェック</summary>
                 <div class="growth_box">
-                <table class=disp_check>
-                    <tr>
-                        <th>タブ表示　：</th>
-                        <td v-for="tab in tablist">
-                            <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
-                            <label class="switch-on" :for="tab.tabname" v-html="tab.tabname"></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>ダイス表示：</th>
-                        <td v-for="label in labels">
-                            <input type="checkbox" :id="label.labelname" checked="checked" v-model="label.visible" />
-                            <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>オプション：</th>
-                        <td>
-                            <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
-                            <label class="switch-on" for="tabname">タブ名表示</label>
-                        </td>
-                        <td>
-                            <input type="checkbox" id="value" checked="checked" v-model="value.visible" />
-                            <label class="switch-on" for="value">出目表示</label>
-                        </td>
-                        <td>
-                            <input type="checkbox" id="status" checked="checked" v-model="status" />
-                            <label class="switch-on" for="status">ステ依存表示</label>
-                        </td>
-                    </tr>
-                </table>
+                    <table class=disp_check>
+                        <tr>
+                            <th>タブ表示　：</th>
+                            <td v-for="tab in tablist">
+                                <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
+                                <label class="switch-on" :for="tab.tabname" v-html="tab.tabname"></label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>ダイス表示：</th>
+                            <td v-for="label in labels">
+                                <input type="checkbox" :id="label.labelname" checked="checked"
+                                    v-model="label.visible" />
+                                <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>オプション：</th>
+                            <td>
+                                <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
+                                <label class="switch-on" for="tabname">タブ名表示</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" id="value" checked="checked" v-model="value.visible" />
+                                <label class="switch-on" for="value">出目表示</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" id="status" checked="checked" v-model="status" />
+                                <label class="switch-on" for="status">ステ依存表示</label>
+                            </td>
+                        </tr>
+                    </table>
 
-                <div id="growth_area">
-                    <template v-for="char in character">
-                        <template v-if="result[char.charname]">
-                            <h3 v-html="'＜'+char.charname+'＞'"></h3>
-                            <template v-for="label in labels">
-                                <table class="growth" v-if="result[char.charname][label.labelname]">
-                                    <template v-if="label.visible">
-                                        <caption>◯{{ label.labelname }}</caption>
-                                        <template v-for="line in result[char.charname][label.labelname]">
-                                            <template v-if="line.status">
-                                                <tr
-                                                    v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                                                    <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                                                    <td class="ginou">{{ line.ginou }}</td>
-                                                    <td v-if="value.visible">＞ {{ line.value }}</td>
-                                                </tr>
-                                            </template>
-                                            <template v-else>
-                                                <tr v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                                                    <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                                                    <td class="ginou">{{ line.ginou }}</td>
-                                                    <td v-if="value.visible">＞ {{ line.value }}</td>
-                                                </tr>
+                    <div id="growth_area">
+                        <template v-for="char in character">
+                            <template v-if="result[char.charname]">
+                                <h3 v-html="'＜'+char.charname+'＞'"></h3>
+                                <template v-for="label in labels">
+                                    <table class="growth" v-if="result[char.charname][label.labelname]">
+                                        <template v-if="label.visible">
+                                            <caption>◯{{ label.labelname }}</caption>
+                                            <template v-for="line in result[char.charname][label.labelname]">
+                                                <template v-if="line.status">
+                                                    <tr
+                                                        v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
+                                                        <td class="ginou">{{ line.ginou }}</td>
+                                                        <td v-if="value.visible">＞ {{ line.value }}</td>
+                                                    </tr>
+                                                </template>
+                                                <template v-else>
+                                                    <tr
+                                                        v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
+                                                        <td class="ginou">{{ line.ginou }}</td>
+                                                        <td v-if="value.visible">＞ {{ line.value }}</td>
+                                                    </tr>
+                                                </template>
                                             </template>
                                         </template>
-                                    </template>
-                                </table>
+                                    </table>
+                                </template>
+                                <br>
                             </template>
-                            <br>
                         </template>
-                    </template>
-                    <br>
-                    <br>
+                        <br>
+                        <br>
+                    </div>
+                    <button type="button" @click="copy">結果をコピー</button>
                 </div>
-                <button type="button" @click="copy">結果をコピー</button>
-            </div>
             </details>
 
             <br><br>
@@ -374,7 +378,6 @@
                     <div :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : 'tab tab.tabname'" :id="tab.tabname">
                         <template v-for="con in tab.value">
                             <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
-                                <!-- <p :class="(con.charname!=='KP'||(tab.tabname!=='メイン'&&tab.tabname!=='情報'))&&con.charname!=='' ? 'char' : 'KP'" :style = "'color:'+character.find((u) => u.charname === con.charname).color"> -->
                                 <p class="char"
                                     :style="'color:'+character.find((u) => u.charname === con.charname).color">
                                     <b v-html="con.charname" v-if="con.charname!==''"></b><br>
@@ -400,8 +403,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- <button @click="copy2">ダウンロード</button> -->
             <button onclick="logFileData()">ダウンロード</button>
 
         </div>
