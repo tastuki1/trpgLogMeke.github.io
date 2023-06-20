@@ -18,25 +18,25 @@
             }
             return ret;
         }
-        //x回ダイスへの対応用メソッド
+        //おみくじとx回ダイスへの対応用メソッド
         function readRegex(str) {
             const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-            const omikuji_regex_g =/今日のあなたの運勢は……？ \n【.*】/g
+            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
             if (str.match(log_regex_g)) {
                 res = str.match(log_regex_g)
                 for (let r of res) {
-                alert(r)
-                r_new = r.split("\n").join('<br>')
-                alert(r_new)
-                str = str.replace(r, r_new)
+                    alert(r)
+                    r_new = r.split("\n").join('<br>')
+                    alert(r_new)
+                    str = str.replace(r, r_new)
                 }
-            }else if (str.match(omikuji_regex_g)){
+            } else if (str.match(omikuji_regex_g)) {
                 res = str.match(omikuji_regex_g)
                 for (let r of res) {
-                alert(r)
-                r_new = r.split("\n").join('<br>')
-                alert(r_new)
-                str = str.replace(r, r_new)
+                    alert(r)
+                    r_new = r.split("\n").join('<br>')
+                    alert(r_new)
+                    str = str.replace(r, r_new)
                 }
             }
             return str
@@ -44,41 +44,20 @@
         function logFileData() {
             var result = window.confirm("ダウンロードしますか？");
             if (result) {
-                // const copyText = this.$el.querySelector('#contentText').innerHTML
-                // // const templateFile = ("./basefile.txt");
-                // var reader = new FileReader()
-                // // reader.readAsText(templateFile)
-                // reader.onload = () => {
-                //     var template = reader.result
-                //     alert(template)
-                //     const copyText =  document.getElementById('contentText').innerHTML
-                //     const blob = new Blob([copyText], { type: "text/plain" });
-                //     const link = document.createElement('a');
-                //     link.href = URL.createObjectURL(blob);
-                //     link.download = 'logtest.html';
-                //     link.click();
-                // }
-                // // ファイル読み込みエラー時の処理
-                // reader.onerror = () => {
-                //     alert("ファイル読み込みエラー")
-                // }
-                const content =  document.getElementById('contentText').innerHTML.split("><").join(">\n<")
-                const logFileName = document.getElementsByName('logFileName')[0].value
-                const nameColor = document.getElementsByName('nameColor')[0].value
-                const backColor = document.getElementsByName('backColor')[0].value
-                const viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<")
-
-                copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
-                alert(copyText)
+                var content = document.getElementById('contentText').innerHTML.split("><").join(">\n<")
+                var logFileName = document.getElementsByName('logFileName')[0].value
+                var nameColor = document.getElementsByName('nameColor')[0].value
+                // alert(nameColor)
+                var backColor = document.getElementsByName('backColor')[0].value
+                var viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<")
+                var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
+                // alert(copyText)
                 // alert(str)
                 const blob = new Blob([copyText], { type: "text/plain" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = 'logtest.html';
+                link.download = logFileName + '.html';
                 link.click();
-                //   var elem = document.getElementById('logFileDownload');
-                // // 送信
-                // elem.submit();
             }
         }
     </script>
@@ -210,23 +189,13 @@
             overflow-wrap: break-word;
         }
 
-        /* .tab p{
-            margin-left: .5rem;
-            text-indent: -.5rem;
-        } */
-
-        /* .box5 .雑談 p {
-            margin: 0;
-            padding: .5rem;
-        } */
-
         p.char {
             margin-left: .5rem;
             text-indent: -.5rem;
         }
 
         span {
-            display:inline-block;
+            display: inline-block;
             margin: .5rem 1rem .2rem .5rem;
         }
 
@@ -302,7 +271,8 @@
                                         <caption>◯{{ label.labelname }}</caption>
                                         <template v-for="line in result[char.charname][label.labelname]">
                                             <template v-if="line.status">
-                                                <tr v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                                <tr
+                                                    v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
                                                     <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
                                                     <td class="ginou">{{ line.ginou }}</td>
                                                     <td v-if="value.visible">＞ {{ line.value }}</td>
@@ -384,124 +354,78 @@
                         <td width="40%" v-html="user.charname"></td>
                         <td width="35%">
                             <div class="sample">
-                                <input type="radio" :id="user.charname+'_char'" value="character" v-model="user.style"/>
+                                <input type="radio" :id="user.charname+'_char'" value="character"
+                                    v-model="user.style" />
                                 <label class="switch-on" :for="user.charname+'_char'"
                                     style="display: inline-block;">人物</label>
-                                <input type="radio" :id="user.charname+'_item'"   value="item" v-model="user.style"/>
+                                <input type="radio" :id="user.charname+'_item'" value="item" v-model="user.style" />
                                 <label class="switch-on" :for="user.charname+'_item'"
                                     style="display: inline-block;">情報</label>
-                                <input type="radio" :id="user.charname+'_scene'" value="scene" v-model="user.style"/>
+                                <input type="radio" :id="user.charname+'_scene'" value="scene" v-model="user.style" />
                                 <label class="switch-on" :for="user.charname+'_scene'"
                                     style="display: inline-block;">シーン</label>
                             </div>
                         </td>
                         <td width="15%">
-                            <input type="color" v-model="user.color"/>
+                            <input type="color" v-model="user.color" />
                         </td>
                     </tr>
                 </tbody>
             </table>
             <br><br>
-<!-- 
-            <div id="contentText" style="display: none;">
-                <log v-for="tab in component"
-                    v-bind:key="tab.id"
-                    v-bind:tab="tab">
-                </log>
-            </div> -->
 
-            <div id="viewCheckText">
+            <div id="viewCheckText" style="display: none;">
                 <div class="viewCheck">
-                <template v-for="tab in tablist">
-                    <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報|雑談/)">
-                        <input type="checkbox" id="tab.tabname" checked="checked" :onchange="'c_disp(this, '+tab.tabname+'+)'"/>
-                        <span v-html="tab.tabname"></span>
-                    </label>
-                </template>
+                    <template v-for="tab in tablist">
+                        <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報|雑談/)">
+                            <input type="checkbox" id="tab.tabname" checked="checked"
+                                :onchange="'c_disp(this, '+tab.tabname+'+)'" />
+                            <span v-html="tab.tabname"></span>
+                        </label>
+                    </template>
                 </div>
             </div>
-              
-            <!-- <div id="contentText" style="display: none;"> -->
+
             <div id="contentText" style="display: none;">
-                <div v-for="tab in component" :style = "'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color" >
+                <div v-for="tab in component"
+                    :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color">
                     <div :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : 'tab tab.tabname'" :id="tab.tabname">
                         <template v-for="con in tab.value">
-                        <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
-                        <!-- <p :class="(con.charname!=='KP'||(tab.tabname!=='メイン'&&tab.tabname!=='情報'))&&con.charname!=='' ? 'char' : 'KP'" :style = "'color:'+character.find((u) => u.charname === con.charname).color"> -->
-                        <p class="char" :style = "'color:'+character.find((u) => u.charname === con.charname).color">
-                            <b v-html="con.charname"  v-if="con.charname!==''"></b><br>
-                            <template v-for="c in con.line">
-                            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
-                            <span v-else v-html="c.content"><br></span><br>
+                            <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
+                                <!-- <p :class="(con.charname!=='KP'||(tab.tabname!=='メイン'&&tab.tabname!=='情報'))&&con.charname!=='' ? 'char' : 'KP'" :style = "'color:'+character.find((u) => u.charname === con.charname).color"> -->
+                                <p class="char"
+                                    :style="'color:'+character.find((u) => u.charname === con.charname).color">
+                                    <b v-html="con.charname" v-if="con.charname!==''"></b><br>
+                                    <template v-for="c in con.line">
+                                        <span v-if="Object.keys(c.dice).length" :style="c.dice"
+                                            v-html="c.content"></span>
+                                        <span v-else v-html="c.content"></span><br>
+                                    </template>
+                                </p>
                             </template>
-                        </p>
-                        <!-- <p class="KP" v-else>
-                            <template v-for="c in con.line">
-                            <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
-                            <span v-else v-html="c.content"><br></span>
-                            <br>
+                            <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
+                                <div class="box">
+                                    <span class="box-title" v-html="con.charname"></span>
+                                    <p>
+                                        <template v-for="c in con.line">
+                                            <span v-html="c.content"><br></span>
+                                            <br>
+                                        </template>
+                                    </p>
+                                </div>
                             </template>
-                        </p> -->
-                        </template>
-                        <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
-                        <div class="box">
-                            <span class="box-title" v-html="con.charname"></span>
-                            <p>
-                                <template v-for="c in con.line">
-                                <span v-html="c.content"><br></span>
-                                <br>
-                                </template>
-                            </p>
-                        </div>
-                        </template>
                         </template>
                     </div>
                 </div>
             </div>
-            
+
             <!-- <button @click="copy2">ダウンロード</button> -->
             <button onclick="logFileData()">ダウンロード</button>
-            
+
         </div>
     </div>
 </body>
 <script>
-//  Vue.component('log', {
-//    props:['tab'],
-//     template: `
-//     <div class="tab tab.tabname" :id="tab.tabname">
-//         <template v-for="con in tab.value">
-//         <template :v-if="character.find((u) => u.charname === con.charname)[0].style==='character'">
-//         <p class="char con.charname" v-if="con.charname!=='KP'||tab.tabname!=='メイン|情報'">
-//             <b v-html="con.charname"></b><br>
-//             <template v-for="c in con.line">
-//             <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
-//             <span v-else v-html="c.content"><br></span><br>
-//             </template>
-//         </p>
-//         <p class="KP" v-else>
-//             <template v-for="c in con.line">
-//             <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"><br></span>
-//             <span v-else v-html="c.content"><br></span>
-//             <br>
-//             </template>
-//         </p>
-//         </template>
-//         <template :v-if="character.filter((u) => u.charname === con.charname)[0].style==='item'">
-//         <div class="box">
-//             <span class="box-title" v-html="con.charname"></span>
-//             <p>
-//                 <template v-for="c in con.line">
-//                 <span v-html="c.content"><br></span>
-//                 <br>
-//                 </template>
-//             </p>
-//         </div>
-//         </template>
-//         </template>
-//     </div>
-//     `
-//   })
 
     var makeLog = new Vue({
         el: "#makeLog",
@@ -534,19 +458,19 @@
             htmlSafe(str) {
                 if (typeof str !== 'string') return str;
                 var patterns = {
-                    '<'  : '&lt;',
-                    '>'  : '&gt;',
-                    '&'  : '&amp;',
-                    '"'  : '&quot;',
-                    '\'' : '&#x27;',
-                    '`'  : '&#x60;',
-                    "," : "&#44;",
-                    "." : "&#46;",
-                    "(" : "&#40;",
-                    ")" : "&#41;",
-                    " " : "&#32;"
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '&': '&amp;',
+                    '"': '&quot;',
+                    '\'': '&#x27;',
+                    '`': '&#x60;',
+                    ",": "&#44;",
+                    ".": "&#46;",
+                    "(": "&#40;",
+                    ")": "&#41;",
+                    " ": "&#32;"
                 };
-                return str.replace(/[<>&"'`,.()]/g, function(match) {
+                return str.replace(/[<>&"'`,.()]/g, function (match) {
                     return patterns[match];
                 })
             },
@@ -584,27 +508,27 @@
                 var content = content.split("<br>")
                 temp_cont = []
 
-                for(let cont of content){
+                for (let cont of content) {
                     var dice = {}
                     if (regex_d100.test(cont)) {
                         var res = cont.match(regex_d100)[1]
                         if (cont.match(/決定的成功/)) {
-                            dice =  { background : 'linear-gradient(transparent 70%, #7fbfff 0%)' }
+                            dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
                             label = "クリティカル"
                         } else if (cont.match(/スペシャル/)) {
-                            dice =  { background : 'linear-gradient(transparent 70%, #7fbfff 0%)' }
+                            dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
                             label = "スペシャル"
                         } else if (cont.match(/致命的失敗/)) {
-                            dice = { background : 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
+                            dice = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
                             label = "ファンブル"
                         } else if (cont.match(/成功|スペシャル/)) {
-                            dice = { background : 'linear-gradient(transparent 70%, #7fbfff 0%)' }
+                            dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
                             var judge = cont.match(/&lt;=\d+ 【.*】/)
                             if (judge && defaultDice.includes(judge[0])) {
                                 label = "初期値成功"
                             }
                         } else {
-                            dice =  { backgroundColor : 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
+                            dice = { backgroundColor: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
                         }
                         if (label != "") {
                             var s_regex = /SAN値チェック|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
@@ -614,7 +538,7 @@
                             if (s_regex.test(cont)) {
                                 status = true
                             }
-                            if (regex.test(cont)){
+                            if (regex.test(cont)) {
                                 skill = cont.match(regex)[1]
                             }
                             if (!this.result[charname]) {
@@ -635,15 +559,15 @@
                     if (last >= 0 && this.component[num].value[last].charname === charname) {
                         this.component[num].value[last].line.push(...temp_cont)
                     } else {
-                        this.component[num].value.push({ charname: charname, line:temp_cont })
+                        this.component[num].value.push({ charname: charname, line: temp_cont })
                     }
                 } else {
-                    this.component.push({ tabname: tabname, value: [{ charname: charname, line:temp_cont }] })
+                    this.component.push({ tabname: tabname, value: [{ charname: charname, line: temp_cont }] })
                 }
             },
             readLogFile: function (e) {
                 this.result = []
-                this.tablist = [{tabname: "メイン", color: "#ffffff", visible: true},{tabname: "情報", color: "#ffffff", visible: true}]
+                this.tablist = [{ tabname: "メイン", color: "#ffffff", visible: true }, { tabname: "情報", color: "#ffffff", visible: true }]
                 this.character = []
                 this.component = []
                 const files = e.target.files
@@ -674,11 +598,11 @@
                 }
                 content.chunk(8).forEach(line => {
                     tabname = this.htmlSafe(line[1].match(/<span> \[(.*)\]</)[1]);
-                    if(!this.tablist.some((u) => u.tabname === tabname)){
-                        this.tablist.push({tabname: tabname, color: "#707070", visible: true})
+                    if (!this.tablist.some((u) => u.tabname === tabname)) {
+                        this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
                     }
                     if (line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)) {
-                        charname =  this.htmlSafe(line[2].match(/>(.*)</)[1])
+                        charname = this.htmlSafe(line[2].match(/>(.*)</)[1])
                         if (list.includes(charname)) {
                             style = "character"
                             ary = ary.filter(item => item.charname != charname)
@@ -693,7 +617,7 @@
                             color = "#707070"
                         }
                         this.analizeDice(tabname, charname, line[4])
-                        
+
                         ary.push({ charname: charname, style: style, color: color })
                     }
                 })
@@ -705,32 +629,6 @@
                     return 0
                 })
             },
-            // downloadData: function (e) {
-            //     let template = ``
-            //     template = makelog()
-            //     var result = window.confirm("ダウンロードしますか？");
-            //     if (result) {
-            //         const blob = new Blob([template], { type: "text/plain" });
-            //         const link = document.createElement('a');
-            //         link.href = URL.createObjectURL(blob);
-            //         link.download = 'logtest.html';
-            //         link.click();
-            // },
-            // makeContent() {               
-            //     let template = ``
-            //     template = makelog()
-            //     var result = window.confirm("ダウンロードしますか？");
-            //     if (result) {
-            //         const blob = new Blob([template], { type: "text/plain" });
-            //         const link = document.createElement('a');
-            //         link.href = URL.createObjectURL(blob);
-            //         link.download = 'logtest.html';
-            //         link.click();
-            //         //   var elem = document.getElementById('logFileDownload');
-            //         // // 送信
-            //         // elem.submit();
-            //     }
-            // }
         }
     })
 </script>

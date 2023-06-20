@@ -18,16 +18,17 @@
       }
       return ret;
     }
+    //おみくじとx回ダイスへの対応用メソッド
     function readRegex(str) {
       const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-      const omikuji_regex_g =/今日のあなたの運勢は……？ \n【.*】/g
+      const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
       if (str.match(log_regex_g)) {
         res = str.match(log_regex_g)
         for (let r of res) {
           r_new = r.split("\n").join('<br>')
           str = str.replace(r, r_new)
         }
-      }else if (str.match(omikuji_regex_g)){
+      } else if (str.match(omikuji_regex_g)) {
         res = str.match(omikuji_regex_g)
         for (let r of res) {
           r_new = r.split("\n").join('<br>')
