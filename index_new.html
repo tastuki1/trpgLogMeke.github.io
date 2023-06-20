@@ -363,10 +363,10 @@
             <div id="viewCheckText" style="display: none;">
                 <div class="viewCheck">
                     <template v-for="tab in tablist">
-                        <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報|雑談/)">
-                            <input type="checkbox" id="tab.tabname" checked="checked"
-                                :onchange="'c_disp(this, '+tab.tabname+'+)'" />
-                            <span v-html="tab.tabname"></span>
+                        <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
+                            <input type="checkbox" :id="tab.tabname" checked="checked"
+                                :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
+                            <span :id="tab.tabname" v-html="tab.tabname"></span>
                         </label>
                     </template>
                 </div>
@@ -374,38 +374,43 @@
 
             <div id="contentText" style="display: none;">
                 <div v-for="tab in component"
-                    :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color">
-                    <div :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : 'tab tab.tabname'" :id="tab.tabname">
-                        <template v-for="con in tab.value">
-                            <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
-                                <p class="char"
-                                    :style="'color:'+character.find((u) => u.charname === con.charname).color">
-                                    <b v-html="con.charname" v-if="con.charname!==''"></b><br>
+                    :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color"
+                    :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : tab.tabname+' tab'">
+                    <template v-for="con in tab.value">
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
+                            <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
+                                <b v-html="con.charname" v-if="con.charname!==''"></b><br>
+                                <template v-for="c in con.line">
+                                    <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
+                                    <span v-else v-html="c.content"></span><br>
+                                </template>
+                            </p>
+                        </template>
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
+                            <div class="box">
+                                <span class="box-title" v-html="con.charname"></span>
+                                <p>
                                     <template v-for="c in con.line">
-                                        <span v-if="Object.keys(c.dice).length" :style="c.dice"
-                                            v-html="c.content"></span>
-                                        <span v-else v-html="c.content"></span><br>
+                                        <span v-html="c.content"><br></span>
+                                        <br>
                                     </template>
                                 </p>
-                            </template>
-                            <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
-                                <div class="box">
-                                    <span class="box-title" v-html="con.charname"></span>
-                                    <p>
-                                        <template v-for="c in con.line">
-                                            <span v-html="c.content"><br></span>
-                                            <br>
-                                        </template>
-                                    </p>
-                                </div>
-                            </template>
+                            </div>
                         </template>
-                    </div>
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='scene'">
+                            <h3 v-html="con.charname"></h3>
+                            <p>
+                                <template v-for="c in con.line">
+                                    <span v-html="c.content"><br></span>
+                                    <br>
+                                </template>
+                            </p>
+                        </template>
+                    </template>
                 </div>
             </div>
-            <button onclick="logFileData()">ダウンロード</button>
-
         </div>
+        <button onclick="logFileData()">ダウンロード</button>
     </div>
 </body>
 <script>

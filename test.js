@@ -130,7 +130,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
         <meta charset="UTF-8">
         <script type="text/javascript">
             function c_disp(obj, name) {
-                const title =document.getElementsByClassName(name)
+                const title = document.getElementsByClassName(name)
                 for ( let i = 0; i < title.length; i ++ ){
                 if ( obj.checked == true) {
                     title[i].style.display = 'block';
