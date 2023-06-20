@@ -116,11 +116,6 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
 /* PCの記載 */
   p.char {
     margin-left: .5rem;
-    text-indent: -.5rem;
-  }
-  p.KP {
-    margin-left: .5rem;
-    text-indent: -.5rem;
   }
 </style>`
   var template = `
