@@ -389,7 +389,7 @@
                         <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
                             <div class="box">
                                 <span class="box-title" v-html="con.charname"></span>
-                                <p>
+                                <p style="color:#707070">
                                     <template v-for="c in con.line">
                                         <span v-html="c.content"><br></span>
                                         <br>
@@ -399,7 +399,7 @@
                         </template>
                         <template v-if="character.find((u) => u.charname === con.charname).style==='scene'">
                             <h3 v-html="con.charname"></h3>
-                            <p>
+                            <p >
                                 <template v-for="c in con.line">
                                     <span v-html="c.content"><br></span>
                                     <br>
