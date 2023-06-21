@@ -63,6 +63,7 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic&family=BIZ+UDPMincho&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
 
         html {
@@ -72,7 +73,7 @@
         body {
             -webkit-text-size-adjust: 100%;
             background-color: #6b8e23;
-            font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+            font-family: sans-serif;
         }
 
         h1 {
@@ -87,6 +88,7 @@
 
         h3 {
             margin: .5rem;
+            color: #707070
         }
 
         .disp_check {
@@ -120,15 +122,22 @@
         }
 
         details {
-            padding: 1rem;
-            background-color: #e6ece3;
+            padding: .5rem;
+            /* background-color: #e6ece3; */
+            /* background-color: #ffffff; */
+            border: 1px solid #e6ece3;
             border-left: 3px solid #6b8e23;
+        }
+
+        sammary {
+            margin: 0rem;
         }
 
         .growth_box {
             /* margin: 1rem; */
             padding: .5rem;
             /* padding-top: 0rem; */
+            
         }
 
         .box5 {
@@ -138,9 +147,21 @@
             background-color: #ffffff;
         }
 
+        .box5 p {
+            margin: 0;
+            padding: .5rem;
+            text-align: left;
+        }
+
+        /* span {
+            display:block;
+            padding: .5rem 0rem;
+            margin-left: .5rem;
+        } */
+
         .sample input {
             display: none;
-        }
+        } 
 
         .sample label {
             display: block;
@@ -175,6 +196,43 @@
             color: #fff;
         }
 
+        .tab {
+            position: relative;
+            margin: 1rem 0 1rem 0;
+            padding: .5rem 1.5rem .5rem 1rem;
+            box-sizing: border-box;
+            background: #f5f5f5;
+            overflow-wrap: break-word;
+        }
+
+        .box {
+            position: relative;
+            margin: 2rem 1rem 1.5rem;
+            padding: 1rem 1.5rem .5rem 1rem;
+            border: solid 3px #707070;
+            border-radius: 8px;
+            background: #fff;
+            line-height: 1.5;
+        }
+
+        .box .box-title {
+            position: absolute;
+            display: inline-block;
+            top: -0.6rem;
+            left: .5rem;
+            padding: 0 .5rem;
+            line-height: 1;
+            background: #fff;
+            color: #707070;
+            font-weight: bold;
+        }
+
+        .box p {
+            margin: 0;
+            color: #707070;
+        }
+
+
         @media screen and (max-width: 480px) {
             html {
                 font-size: 14px;
@@ -197,6 +255,16 @@
                 padding: .5rem .2rem;
 
             }
+        }
+
+        /* PCの記載 */
+        p.char {
+            margin-left: .5rem;
+            text-indent: -.5rem;
+        }
+
+        p.KP {
+            margin-left: .5rem;
         }
     </style>
 </head>
@@ -294,13 +362,45 @@
                 </div>
             </details>
 
+            <br>
+
+            <details>
+                <summary>表示形式サンプル</summary>
+                <div class="growth_box">
+                    <p class="char" style="color: rgb(127, 191, 255);">
+                        <b>キャラクタ名</b>
+                        <br> <span> 人物を選ぶとこんな感じで表示されます</span>
+                        <br>
+                    </p>
+                    <div class="box">
+                        <span class="box-title">アイテム名</span>
+                        <p>
+                            <span>情報を選ぶとこんな感じで表示されます</span> <br>
+                        </p>
+                    </div>
+
+                    <h3>シーン名</h3>
+                    <p class="KP" style="color: rgb(112, 112, 112);">
+                        <span>場面を選ぶとこんな感じで表示されます</span> <br>
+                    </p>
+
+                    <div class="tab" style="border-left: 3px solid rgb(211, 13, 13);">
+                        <p class="char" style="color: rgb(112, 112, 112);">
+                            <b>キャラクタ名</b>
+                            <br> <span>メインと情報以外のタブはこんな感じ(左側のラインの色が選択できます)</span>
+                            <br>
+                        </p>
+                    </div>
+                </div>
+            </details>
+
             <br><br>
             <table width=400px>
                 <tbody>
                     <tr>
                         <th align="left">タイトル設定</th>
                     </tr>
-                    <tr>
+                    <tr  style="width: 50%;">
                         <td>ログ名</td>
                         <td>
                             <input type="text" name="logFileName" v-model="logFileName" />
@@ -396,7 +496,7 @@
                                 </template>
                             </p>
                         </template>
-                        <template v-if="character.find((u) => u.charname === con.charname).style==='item'">
+                        <template v-else-if="character.find((u) => u.charname === con.charname).style==='item'">
                             <div class="box">
                                 <span class="box-title" v-html="con.charname"></span>
                                 <p>
@@ -407,7 +507,7 @@
                                 </p>
                             </div>
                         </template>
-                        <template v-if="character.find((u) => u.charname === con.charname).style==='scene'">
+                        <template v-else>
                             <h3 v-html="con.charname"></h3>
                             <p class="KP" style="color:#707070">
                                 <template v-for="c in con.line">
@@ -528,7 +628,7 @@
                                     label = "初期値成功"
                                 }
                             } else {
-                                dice = { backgroundColor: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
+                                dice = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
                             }
                             if (label != "") {
                                 var s_regex = /SAN値チェック|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;

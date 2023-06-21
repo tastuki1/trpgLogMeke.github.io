@@ -54,7 +54,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
   }
   .tab {
     position: relative;
-    margin: .5rem 0 1rem 0;
+    margin: 1rem 0 1rem 0;
     padding: .5rem 1.5rem .5rem 1rem;
     box-sizing: border-box;
     background: #f5f5f5;
@@ -62,7 +62,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
   }
   .box {
     position: relative;
-    margin: 1.5rem 1rem;
+    margin: 2rem 1rem 1.5rem;
     padding: 1rem 1.5rem .5rem 1rem;
     border: solid 3px #707070;
     border-radius: 8px;
