@@ -26,12 +26,14 @@
         res = str.match(log_regex_g)
         for (let r of res) {
           r_new = r.split("\n").join('<br>')
+          // alert(r_new)
           str = str.replace(r, r_new)
         }
       } else if (str.match(omikuji_regex_g)) {
         res = str.match(omikuji_regex_g)
         for (let r of res) {
           r_new = r.split("\n").join('<br>')
+          // alert(r_new)
           str = str.replace(r, r_new)
         }
       }

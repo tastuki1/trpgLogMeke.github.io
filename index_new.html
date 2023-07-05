@@ -25,17 +25,17 @@
             if (str.match(log_regex_g)) {
                 res = str.match(log_regex_g)
                 for (let r of res) {
-                    alert(r)
+                    // alert(r)
                     r_new = r.split("\n").join('<br>')
-                    alert(r_new)
+                    // alert(r_new)
                     str = str.replace(r, r_new)
                 }
             } else if (str.match(omikuji_regex_g)) {
                 res = str.match(omikuji_regex_g)
                 for (let r of res) {
-                    alert(r)
+                    // alert(r)
                     r_new = r.split("\n").join('<br>')
-                    alert(r_new)
+                    // alert(r_new)
                     str = str.replace(r, r_new)
                 }
             }
@@ -53,7 +53,7 @@
                 var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
                 // alert(copyText)
                 // alert(str)
-                const blob = new Blob([copyText], { type: "text/plain" });
+                const blob = new Blob([copyText], { type: "text/html" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = logFileName + '.html';
@@ -447,7 +447,7 @@
                         <th>キャラクタ設定</th>
                     </tr>
                     <tr :class="user.charname" v-for="(user,index) in character">
-                        <td width="40%" v-html="user.charname"></td>
+                        <td width="50%" v-html="user.charname"></td>
                         <td width="40%">
                             <div class="sample">
                                 <input type="radio" :id="user.charname+'_char'" value="character"
@@ -679,10 +679,14 @@
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
                     var content = reader.result
-                    content = readRegex(content).split(/\n/)
-                    this.readLog(content)
+                    // content = readRegex(content).split(/\n/)
+                    if(this.readLog(readRegex(content))){
+                        alert("ファイル読み込み完了")
+                    }else{
+                        alert("ファイル情報取得エラー")
+                    }
                     // console.log(file_reader.result);
-                    alert("ファイル読み込み完了")
+                    
                 }
                 // ファイル読み込みエラー時の処理
                 reader.onerror = () => {
@@ -693,42 +697,65 @@
                 var charname, style, color, tabname = ""
                 list = ["system"]
                 ary = []
-                for (var i = 0; i < 10; i++) {
-                    content.shift()
-                }
-                content.chunk(8).forEach(line => {
-                    tabname = this.htmlSafe(line[1].match(/<span> \[(.*)\]</)[1]);
-                    if (!this.tablist.some((u) => u.tabname === tabname)) {
-                        this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
-                    }
-                    if (line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)) {
-                        charname = this.htmlSafe(line[2].match(/>(.*)</)[1])
-                        if (list.includes(charname)) {
-                            style = "character"
-                            ary = ary.filter(item => item.charname != charname)
-                            if (line[0].match(/color:(.*);/)[1] == "#888888") {
-                                color = "#707070"
-                            } else {
-                                color = line[0].match(/color:(.*);/)[1]
+                var errorCount = 0
+                var contentArray = content.split(/\n\s\s\s\s\n/);
+                // for (var i = 0; i < 10; i++) {
+                // //     content.shift()
+                //     alert(contentArray[i])
+                // // }
+                // contentArray.splice(0, 1).splice(contentArray.length, 1)
+                try{
+                    for(block of contentArray){
+                        var line = block.split(/\n/)
+                        if(!line[1].match(/<span> \[(.*)\]</)){
+                            // alert(line[0])
+                            errorCount += 1
+                            if(errorCount > 2){
+                                return false
+                            }else{
+                                continue
                             }
-                        } else {
-                            style = "item"
-                            list.push(charname)
-                            color = "#707070"
                         }
-                        this.analizeDice(tabname, charname, line[4])
+                    // content.chunk(8).forEach(line => {
+                        
+                        tabname = this.htmlSafe(line[1].match(/<span> \[(.*)\]</)[1]);
+                        if (!this.tablist.some((u) => u.tabname === tabname)) {
+                            this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
+                        }
+                        if (line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)) {
+                            charname = this.htmlSafe(line[2].match(/>(.*)</)[1])
+                            if (list.includes(charname)) {
+                                style = "character"
+                                ary = ary.filter(item => item.charname != charname)
+                                if (line[0].match(/color:(.*);/)[1] == "#888888") {
+                                    color = "#707070"
+                                } else {
+                                    color = line[0].match(/color:(.*);/)[1]
+                                }
+                            } else {
+                                style = "item"
+                                list.push(charname)
+                                color = "#707070"
+                            }
+                            this.analizeDice(tabname, charname, line[4])
 
-                        ary.push({ charname: charname, style: style, color: color })
+                            ary.push({ charname: charname, style: style, color: color })
+                        }
+                    
+                    // })
                     }
-                })
-                this.character = ary.sort((a, b) => {
-                    if (a.style < b.style) return -1;
-                    if (a.style > b.style) return 1;
-                    if (a.charname < b.charname) return -1;
-                    if (a.charname > b.charname) return 1;
-                    return 0
-                })
-            },
+                    this.character = ary.sort((a, b) => {
+                        if (a.style < b.style) return -1;
+                        if (a.style > b.style) return 1;
+                        if (a.charname < b.charname) return -1;
+                        if (a.charname > b.charname) return 1;
+                        return 0
+                    })  
+                    return true
+                }catch{
+                    return false
+                }
+            }
         }
     })
 </script>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>ログ整形ツール</title>
+    <h1>ログ整形</h1>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- <script type="text/javascript" src="./test.js"></script> -->
+    <script type="text/javascript">
+        Array.prototype.chunk = function (n) {
+            len = Math.round(this.length / n, 10)
+            ret = []
+            for (var i = 0; i < len; i++) {
+                ret.push(this.slice(i * n, i * n + n))
+            }
+            return ret;
+        }
+        //おみくじとx回ダイスへの対応用メソッド
+        function readRegex(str) {
+            const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
+            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
+            if (str.match(log_regex_g)) {
+                res = str.match(log_regex_g)
+                for (let r of res) {
+                    // alert(r)
+                    r_new = r.split("\n").join('<br>')
+                    // alert(r_new)
+                    str = str.replace(r, r_new)
+                }
+            } else if (str.match(omikuji_regex_g)) {
+                res = str.match(omikuji_regex_g)
+                for (let r of res) {
+                    // alert(r)
+                    r_new = r.split("\n").join('<br>')
+                    // alert(r_new)
+                    str = str.replace(r, r_new)
+                }
+            }
+            return str
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+        @import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic&family=BIZ+UDPGothic&family=BIZ+UDPMincho&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            -webkit-text-size-adjust: 100%;
+            background-color: #6b8e23;
+            font-family: sans-serif;
+        }
+
+        h1 {
+            margin: 1rem 2rem 0;
+            color: #ffffff;
+            font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+        }
+
+        h2 {
+            margin-bottom: .5rem;
+        }
+
+        h3 {
+            margin: .5rem;
+            color: #707070
+        }
+
+        .disp_check {
+            padding-left: .5rem;
+            border-collapse: separate;
+            border-spacing: 0 1rem;
+        }
+
+        .disp_check th {
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        .disp_check td {
+            display: inline-block;
+        }
+
+        .value {
+            width: 3rem;
+            white-space: nowrap;
+        }
+
+        .growth {
+            padding-left: 1rem;
+        }
+
+        caption {
+            white-space: nowrap;
+            text-align: left;
+            padding-left: .5rem;
+        }
+
+        details {
+            padding: .5rem;
+            /* background-color: #e6ece3; */
+            /* background-color: #ffffff; */
+            border: 1px solid #e6ece3;
+            border-left: 3px solid #6b8e23;
+        }
+
+        sammary {
+            margin: 0rem;
+        }
+
+        .growth_box {
+            /* margin: 1rem; */
+            padding: .5rem;
+            /* padding-top: 0rem; */
+
+        }
+
+        .box5 {
+            padding: 1.5rem;
+            margin: 1rem;
+            border: double 5px #6b8e23;
+            background-color: #ffffff;
+        }
+
+        .box5 p {
+            margin: 0;
+            padding: .5rem;
+            text-align: left;
+        }
+
+        /* span {
+            display:block;
+            padding: .5rem 0rem;
+            margin-left: .5rem;
+        } */
+
+        .sample input {
+            display: none;
+        }
+
+        .sample label {
+            display: block;
+            float: left;
+            cursor: pointer;
+            width: 2rem;
+            margin: 0;
+            padding: .5rem;
+            background: #bdc3c7;
+            color: #869198;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1;
+            transition: .2s;
+        }
+
+        .sample label:first-of-type {
+            border-radius: 0px 0 0 0px;
+        }
+
+        .sample label:last-of-type {
+            border-radius: 0 0px 0px 0;
+        }
+
+        .sample input[type="radio"]:checked+.switch-on {
+            background-color: #a1b91d;
+            color: #fff;
+        }
+
+        .sample input[type="radio"]:checked+.switch-off {
+            background-color: #e67168;
+            color: #fff;
+        }
+
+        .tab {
+            position: relative;
+            margin: 1rem 0 1rem 0;
+            padding: .5rem 1.5rem .5rem 1rem;
+            box-sizing: border-box;
+            background: #f5f5f5;
+            overflow-wrap: break-word;
+        }
+
+        .box {
+            position: relative;
+            margin: 2rem 1rem 1.5rem;
+            padding: 1rem 1.5rem .5rem 1rem;
+            border: solid 3px #707070;
+            border-radius: 8px;
+            background: #fff;
+            line-height: 1.5;
+        }
+
+        .box .box-title {
+            position: absolute;
+            display: inline-block;
+            top: -0.6rem;
+            left: .5rem;
+            padding: 0 .5rem;
+            line-height: 1;
+            background: #fff;
+            color: #707070;
+            font-weight: bold;
+        }
+
+        .box p {
+            margin: 0;
+            color: #707070;
+        }
+
+
+        @media screen and (max-width: 480px) {
+            html {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 30px;
+                margin: .5rem 1rem 0;
+                color: #ffffff;
+                font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+            }
+
+            .box5 {
+                margin: .5rem;
+                padding: 1rem;
+            }
+
+            .sample label {
+                width: 2rem;
+                padding: .5rem .2rem;
+
+            }
+        }
+
+        /* PCの記載 */
+        p.char {
+            margin-left: .5rem;
+            text-indent: -.5rem;
+        }
+
+        p.KP {
+            margin-left: .5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box5">
+        <div id="makeLog">
+            合体させたいログを選択してください．<br>
+            ※必ず1から順番になるようにしてください
+            <br><br><br>
+            ファイル1：
+            <input type="file" accept="text/html" id="inputFile1" @change="readLogFile">
+            <br><br>
+            ファイル2：
+            <input type="file" accept="text/html" id="inputFile2" @change="readLogFile">
+            <br><br>
+            ファイル3：
+            <input type="file" accept="text/html" id="inputFile3" @change="readLogFile">
+            <br><br><br>
+
+            <table>
+                <tr>
+                    <td>ログ名</td>
+                    <td>
+                        <input type="text" name="logFileName" v-model="logFileName" />
+                    </td>
+                    <td>
+                        <button @click="logFileData">ダウンロード</button>
+                    </td>
+                </tr>
+            </table>
+           
+        </div>
+</body>
+<script>
+
+    var makeLog = new Vue({
+        el: "#makeLog",
+        data: {
+            content: [],
+            logFileName: "log"
+        },
+        methods: {
+            htmlSafe(str) {
+                if (typeof str !== 'string') return str;
+                var patterns = {
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '&': '&amp;',
+                    '"': '&quot;',
+                    '\'': '&#x27;',
+                    '`': '&#x60;',
+                    ",": "&#44;",
+                    ".": "&#46;",
+                    "(": "&#40;",
+                    ")": "&#41;",
+                    " ": "&#32;"
+                };
+                return str.replace(/[<>&"'`,.()]/g, function (match) {
+                    return patterns[match];
+                })
+            },
+            copy() {
+                const copyText = this.$el.querySelector('#growth_area').innerText
+                navigator.clipboard
+                    .writeText(copyText)
+                    .then(() => {
+                        alert('テキストコピー完了')
+                        console.log('テキストコピー完了')
+                    })
+                    .catch(e => {
+                        console.error(e)
+                    })
+            },
+            readLogFile: function (e) {
+                // this.result = []
+                // this.tablist = [{ tabname: "メイン", color: "#ffffff", visible: true }, { tabname: "情報", color: "#ffffff", visible: true }]
+                // this.character = []
+                // this.component = []
+                const files = e.target.files
+                this.file = files[0]
+                this.logFileName = this.file.name.replace(/\[.+\](.*)/, "").replace(/\.html/, "")
+                var reader = new FileReader()
+                reader.readAsText(this.file)
+                // ファイル読み込み完了時の処理
+                reader.onload = () => {
+                    //これまでに読み込んだファイルの内容
+                    var array1 = this.content;
+                    array1.splice(this.content.length - 1, 1);
+                    //新規に読み込んだファイルの内容
+                    var array2 = reader.result.split(/\n\s\s\s\s\n/);
+                    this.content = Array.from(new Set([...array1, ...array2]));
+                    alert("ファイル読み込み完了")
+                }
+                // ファイル読み込みエラー時の処理
+                reader.onerror = () => {
+                    alert("ファイル読み込みエラー")
+                }
+            },
+            logFileData() {
+                var result = window.confirm("ダウンロードしますか？");
+                if (result) {
+                    var textContent = this.content.join('\n    \n')
+                    const blob = new Blob([textContent], { type: "text/html" });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = this.logFileName + '.html';
+                    link.click();
+
+                }
+            }
+        }
+    })
+</script>
+
+</html>

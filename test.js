@@ -112,6 +112,10 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
       content: "";
       margin: 0.6rem;
     }
+    b {
+      padding: 0.5rem;
+      display: block;
+    }
   }
 /* PCの記載 */
   p.char {
