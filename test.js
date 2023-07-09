@@ -90,7 +90,6 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
     margin: 0.8rem;
   }
   b {
-    padding: 0.5rem;
     display: block;
   }
   @media screen and (max-width: 480px){
@@ -115,10 +114,6 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
       display: block;
       content: "";
       margin: 0.6rem;
-    }
-    b {
-      padding: 0.5rem;
-      display: block;
     }
   }
 /* PCの記載 */
