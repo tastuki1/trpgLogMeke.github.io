@@ -50,6 +50,9 @@ font-family: 'New Tegomin', serif;
 h3 {
 margin: .5rem;
 }
+b{
+  display: block;
+}
 .viewcheck{
 padding-left: 3rem;
 color: ${nameColor};
@@ -103,9 +106,6 @@ font-weight: bold;
 .box p {
 margin: 0;
 color: #707070;
-}
-b{
-  display: block;
 }
 bbbbb {
 display: block;

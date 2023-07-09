@@ -34,6 +34,9 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
       margin: .5rem;
       style="color:#707070"
     }
+    b{
+      display: block;
+    }
     .viewCheck{
       padding-left: 3rem;
       color: ${nameColor};

@@ -89,6 +89,10 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
     content: "";
     margin: 0.8rem;
   }
+  b {
+    padding: 0.5rem;
+    display: block;
+  }
   @media screen and (max-width: 480px){
     html {
       font-size: 14px;
@@ -158,6 +162,5 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
         </div>
     </body>
 </html>`
-  // const template = `${str1}`
   return template
 }
