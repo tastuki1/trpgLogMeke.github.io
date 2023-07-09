@@ -104,6 +104,9 @@ font-weight: bold;
 margin: 0;
 color: #707070;
 }
+b{
+  display: block;
+}
 bbbbb {
 display: block;
 content: "";
@@ -126,9 +129,6 @@ width: 100%;
 .box5{
 padding: 0.8rem;
 margin: 6.2rem 1rem 1rem;
-}
-b{
-  display: block;
 }
 bbbbb {
 display: block;
