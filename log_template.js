@@ -7,7 +7,7 @@ function makeLogHtml(tablist, character, backColor, nameColor, logFileName, cont
       if(tab.tabname != "メイン" && tab.tabname != "情報"){
       tabtemp = tabtemp + `
   .${tab.tabname} {
-  border-left: 3px solid ${tab.color]};
+  border-left: 3px solid ${tab.color};
   }`
       viewcheck = viewcheck + `
       <label :for= "tab[tabname]">
@@ -127,11 +127,15 @@ width: 100%;
 padding: 0.8rem;
 margin: 6.2rem 1rem 1rem;
 }
+b{
+  display: block;
+}
 bbbbb {
 display: block;
 content: "";
 margin: 0.6rem;
 }
+
 }
 /* PCの記載 */
 p{

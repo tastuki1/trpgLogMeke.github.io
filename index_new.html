@@ -489,7 +489,7 @@
                     <template v-for="con in tab.value">
                         <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
                             <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
-                                <b v-html="con.charname" v-if="con.charname!==''"></b><br>
+                                <b v-html="con.charname" v-if="con.charname!==''"></b>
                                 <template v-for="c in con.line">
                                     <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
                                     <span v-else v-html="c.content"></span><br>
