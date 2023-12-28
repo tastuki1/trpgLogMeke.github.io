@@ -317,6 +317,11 @@
             }
         },
         methods: {
+            resetData() {
+                this.charCopyData.data.params=[]
+                this.charCopyData.data.status=[]
+                this.charCopyData.data.commands=""
+            },
             htmlSafe(str) {
                 if (typeof str !== 'string') return str;
                 var patterns = {
@@ -361,7 +366,11 @@
                         "label": element,
                         "value": match[1]
                         })
-                        array_commands.push(this.dice+"<={"+element+"}*5 【"+element+"×5】")
+                        if(this.secretDice){
+                            array_commands.push("s"+this.dice+"<={"+element+"}*5 【"+element+"×5】")
+                        }else{
+                            array_commands.push(this.dice+"<={"+element+"}*5 【"+element+"×5】")
+                        }
                     }
                 });
                 // SANなどのステータスを追加
@@ -378,7 +387,8 @@
                 });
                 // コマンドテキストを作成
                 this.charCopyData.data.commands=array_commands.join("\n");
-                var str= JSON.stringify(this.charCopyData)
+                var str= JSON.stringify(this.charCopyData);
+                this.resetData();
                 alert("コマ作ったよ！")
                 setTimeout(() => navigator.clipboard.writeText(str), 1000);
 
