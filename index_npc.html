@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>ログ整形ツール</title>
-    <h1>ログ整形</h1>
+    <title>NPCコマ作成ツール</title>
+    <h1>NPCメーカー</h1>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <!-- <script type="text/javascript" src="./test.js"></script> -->
     <script type="text/javascript">
@@ -253,31 +253,27 @@
 <body>
     <div class="box5">
         <div id="makeLog">
-            合体させたいログを選択してください．<br>
-            ※必ず1から順番になるようにしてください
-            <br><br><br>
-            ファイル1：
-            <input type="file" accept="text/html" id="inputFile1" @change="readLogFile">
+            作成するNPCのデータを入力してください．<br><br>
+            <p>名前</p>
+            <input type="text" id="char_name" v-model="char_name">
+            <br>
+            <p>ステータス</p>
+            <textarea id="char_data" v-model="char_data" rows="4" cols="40"
+            placeholder="以下のような形式に対応しています。
+（例1）HP:XX POW:XX
+（例2）DEX：XX,STR：XX"></textarea><br>
+            <p>技能</p>
+            <textarea id="char_skill" v-model="char_skill" rows="4" cols="40"
+            placeholder="以下のような形式に対応しています。
+（例1）日本刀:85 医学：60
+（例2）＜こぶし＞65%,«回避»70%"></textarea><br><br>
+            <input type="checkbox" id="secret" v-model="secretDice">シークレットダイスにする<br>
+            <input type="radio" id="dice_ccb" value="CCB" v-model="dice">
+            <label for="dice_ccb">CCB</label>
+            <input type="radio" id="dice_cc" value="CC" v-model="dice">
+            <label for="dice_cc">CC</label>
             <br><br>
-            ファイル2：
-            <input type="file" accept="text/html" id="inputFile2" @change="readLogFile">
-            <br><br>
-            ファイル3：
-            <input type="file" accept="text/html" id="inputFile3" @change="readLogFile">
-            <br><br><br>
-
-            <table>
-                <tr>
-                    <td>ログ名</td>
-                    <td>
-                        <input type="text" name="logFileName" v-model="logFileName" />
-                    </td>
-                    <td>
-                        <button @click="logFileData">ダウンロード</button>
-                    </td>
-                </tr>
-            </table>
-           
+            <button @click="makeNPC">ダウンロード</button>
         </div>
 </body>
 <script>
@@ -285,8 +281,40 @@
     var makeLog = new Vue({
         el: "#makeLog",
         data: {
-            content: [],
-            logFileName: "log"
+            dice:"CCB",
+            secretDice:true,
+            char_name:"",
+            char_data:"",
+            char_skill:"",
+            char_commands:"",
+            status:["HP","MP","SAN"],
+            param:["STR","CON","DEX","POW","APP","SIZ","INT","EDU"],
+            charCopyData: {
+                "kind": "character",
+                "data": {
+                    "name": "",
+                    "playerName": "",
+                    "memo":"",
+                    "initiative": 0,
+                    "externalUrl": "",
+                    "status":[],
+                    "params":[],
+                    "iconUrl": null,
+                    "faces":[],
+                    "x": 247,
+                    "y": -247,
+                    "z": 0,
+                    "angle":0,
+                    "width":4,
+                    "height":4,
+                    "active":true,
+                    "secret":true,
+                    "invisible": false,
+                    "hideStatus": false,
+                    "color": "#888888",
+                    "commands":""
+                }
+            }
         },
         methods: {
             htmlSafe(str) {
@@ -308,57 +336,54 @@
                     return patterns[match];
                 })
             },
-            copy() {
-                const copyText = this.$el.querySelector('#growth_area').innerText
-                navigator.clipboard
-                    .writeText(copyText)
-                    .then(() => {
-                        alert('テキストコピー完了')
-                        console.log('テキストコピー完了')
+            makeNPC() {
+                // キャラクタ名を設定
+                this.charCopyData.data.name=this.char_name
+                // 技能のダイスコマンド用の配列を作成
+                array_commands=[];
+                const re = /[:：\/\>＞»》〉）)\<＜«《〈（(\n]*(\D+)[:：\/\>＞»》〉）)]+(\d{1,3})[％\%\,\n\s]+/g
+                var match = this.char_skill.matchAll(re)
+                if (match){
+                    Array.from(match).forEach(element => {
+                        if(this.secretDice){
+                            array_commands.push("s"+this.dice+"<="+element[2]+" 【"+element[1]+"】")
+                        }else{
+                            array_commands.push(this.dice+"<="+element[2]+" 【"+element[1]+"】")
+                        }
                     })
-                    .catch(e => {
-                        console.error(e)
-                    })
-            },
-            readLogFile: function (e) {
-                // this.result = []
-                // this.tablist = [{ tabname: "メイン", color: "#ffffff", visible: true }, { tabname: "情報", color: "#ffffff", visible: true }]
-                // this.character = []
-                // this.component = []
-                const files = e.target.files
-                this.file = files[0]
-                this.logFileName = this.file.name.replace(/\[.+\](.*)/, "").replace(/\.html/, "")
-                var reader = new FileReader()
-                reader.readAsText(this.file)
-                // ファイル読み込み完了時の処理
-                reader.onload = () => {
-                    //これまでに読み込んだファイルの内容
-                    var array1 = this.content;
-                    array1.splice(this.content.length - 1, 1);
-                    //新規に読み込んだファイルの内容
-                    var array2 = reader.result.split(/\n\s\s\s\s\n/);
-                    this.content = Array.from(new Set([...array1, ...array2]));
-                    alert("ファイル読み込み完了")
                 }
-                // ファイル読み込みエラー時の処理
-                reader.onerror = () => {
-                    alert("ファイル読み込みエラー")
-                }
-            },
-            logFileData() {
-                var result = window.confirm("ダウンロードしますか？");
-                if (result) {
-                    var textContent = this.content.join('\n    \n')
-                    this.content=[]
-                    const blob = new Blob([textContent], { type: "text/html" });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = this.logFileName + '.html';
-                    link.click();
+                // STRなどのパラメータを追加
+                this.param.forEach(element => {
+                    const re = new RegExp(element + "[:：\/\>＞»》〉]{0,2}([0-9]{1,3})", "g");
+                    var match = re.exec(this.char_data)
+                    if (match){
+                        this.charCopyData.data.params.push({
+                        "label": element,
+                        "value": match[1]
+                        })
+                        array_commands.push(this.dice+"<={"+element+"}*5 【"+element+"×5】")
+                    }
+                });
+                // SANなどのステータスを追加
+                this.status.forEach(element => {
+                    const re = new RegExp(element + "[:：\/\>＞»》〉]{0,2}([0-9]{1,3})", "g");
+                    var match = re.exec(this.char_data)
+                    if (match){
+                        this.charCopyData.data.status.push({
+                        "label": element,
+                        "value": match[1],
+                        "max": match[1]
+                        })
+                    }
+                });
+                // コマンドテキストを作成
+                this.charCopyData.data.commands=array_commands.join("\n");
+                var str= JSON.stringify(this.charCopyData)
+                alert("コマ作ったよ！")
+                setTimeout(() => navigator.clipboard.writeText(str), 1000);
 
-                }
             }
-        }
+    }
     })
 </script>
 

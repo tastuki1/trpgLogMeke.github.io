@@ -47,12 +47,9 @@
                 var content = document.getElementById('contentText').innerHTML.split("><").join(">\n<")
                 var logFileName = document.getElementsByName('logFileName')[0].value
                 var nameColor = document.getElementsByName('nameColor')[0].value
-                // alert(nameColor)
                 var backColor = document.getElementsByName('backColor')[0].value
                 var viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<")
                 var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
-                // alert(copyText)
-                // alert(str)
                 const blob = new Blob([copyText], { type: "text/html" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
