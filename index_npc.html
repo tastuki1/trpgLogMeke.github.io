@@ -318,6 +318,7 @@
         },
         methods: {
             resetData() {
+                this.charCopyData.data.name=""
                 this.charCopyData.data.params=[]
                 this.charCopyData.data.status=[]
                 this.charCopyData.data.commands=""
@@ -346,7 +347,7 @@
                 this.charCopyData.data.name=this.char_name
                 // 技能のダイスコマンド用の配列を作成
                 array_commands=[];
-                const re = /[:：\/\>＞»》〉）)\<＜«《〈（(\n]*(\D+)[:：\/\>＞»》〉）)]+(\d{1,3})[％\%\,\n\s]+/g
+                const re = /[:：\/\>＞»》〉）)\<＜«《〈（(\n]*(\D+)[:：\/\>＞»》〉）)]+(\d{1,3})[％\%\,\n\s]*/g
                 var match = this.char_skill.matchAll(re)
                 if (match){
                     Array.from(match).forEach(element => {
@@ -389,11 +390,13 @@
                 this.charCopyData.data.commands=array_commands.join("\n");
                 var str= JSON.stringify(this.charCopyData);
                 this.resetData();
+                setTimeout(() => this.copyOperation(str), 100);
+            },
+            async copyOperation(text) {
+                await navigator.clipboard.writeText(text)
                 alert("コマ作ったよ！")
-                setTimeout(() => navigator.clipboard.writeText(str), 1000);
-
             }
-    }
+        }
     })
 </script>
 
