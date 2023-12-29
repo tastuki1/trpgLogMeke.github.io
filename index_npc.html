@@ -18,29 +18,6 @@
             }
             return ret;
         }
-        //おみくじとx回ダイスへの対応用メソッド
-        function readRegex(str) {
-            const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
-            if (str.match(log_regex_g)) {
-                res = str.match(log_regex_g)
-                for (let r of res) {
-                    // alert(r)
-                    r_new = r.split("\n").join('<br>')
-                    // alert(r_new)
-                    str = str.replace(r, r_new)
-                }
-            } else if (str.match(omikuji_regex_g)) {
-                res = str.match(omikuji_regex_g)
-                for (let r of res) {
-                    // alert(r)
-                    r_new = r.split("\n").join('<br>')
-                    // alert(r_new)
-                    str = str.replace(r, r_new)
-                }
-            }
-            return str
-        }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
@@ -322,6 +299,7 @@
                 this.charCopyData.data.params=[]
                 this.charCopyData.data.status=[]
                 this.charCopyData.data.commands=""
+                this.charCopyData.data.initiative=0
             },
             htmlSafe(str) {
                 if (typeof str !== 'string') return str;
@@ -361,12 +339,15 @@
                 // STRなどのパラメータを追加
                 this.param.forEach(element => {
                     const re = new RegExp(element + "[:：\/\>＞»》〉]{0,2}([0-9]{1,3})", "g");
-                    var match = re.exec(this.char_data)
+                    var match = re.exec(this.char_data);
                     if (match){
                         this.charCopyData.data.params.push({
                         "label": element,
                         "value": match[1]
                         })
+                        if(element==="DEX"){
+                            this.charCopyData.data.initiative=parseInt(match[1])
+                        }
                         if(this.secretDice){
                             array_commands.push("s"+this.dice+"<={"+element+"}*5 【"+element+"×5】")
                         }else{
