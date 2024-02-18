@@ -34,7 +34,7 @@
             }else{
                 r_new = r.split("\n").join('<br>')
             }
-            alert(r_new)
+            // alert(r_new)
             str = str.replace(r, r_new)
             }
         }
@@ -616,7 +616,7 @@
                         var dice = {}
                         var label = ""
                         if (regex_d100.test(cont)) {
-                            console.log(cont)
+                            // console.log(cont)
                             var res = cont.match(regex_d100)[1]
                             if (cont.match(/決定的成功/)) {
                                 dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
