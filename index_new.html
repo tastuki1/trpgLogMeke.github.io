@@ -714,7 +714,7 @@
                     for(block of contentArray){
                         var line = block.split(/\n/)
                         if(!line[1].match(/<span> \[(.*)\]</)){
-                            alert(line[0])
+                            // alert(line[0])
                             errorCount += 1
                             if(errorCount > 2){
                                 return false
