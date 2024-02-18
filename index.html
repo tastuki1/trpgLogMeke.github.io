@@ -30,7 +30,7 @@
             dice = r.match(times_with_skill_g)
             value = dice[3]
             skill = dice[4]
-            r_new = r.split("\n").join(`<br>&lt;=${value} 【${skill}】`)
+            r_new = r.split("\n").join(`<br>&lt;=${value} 【${skill}】 `)
           }else{
             r_new = r.split("\n").join('<br>')
           }
