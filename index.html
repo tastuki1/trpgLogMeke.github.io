@@ -335,10 +335,7 @@
         for (var i = 0; i < 10; i++) {
           content.shift()
         }
-        // var count = 0
         content.chunk(8).forEach(line => {
-          // count=count+8;
-          // console.log(count)
           tabname = line[1].match(/<span> \[(.*)\]</)[1];
           if (!this.tablist.some((u) => u.tabname === tabname)) {
             this.tablist.push({ tabname: tabname, visible: true })
