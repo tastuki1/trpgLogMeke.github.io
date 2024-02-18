@@ -20,26 +20,34 @@
         }
         //おみくじとx回ダイスへの対応用メソッド
         function readRegex(str) {
-            const log_regex_g = /x\d+ CCB(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
-            if (str.match(log_regex_g)) {
-                res = str.match(log_regex_g)
-                for (let r of res) {
-                    // alert(r)
-                    r_new = r.split("\n").join('<br>')
-                    // alert(r_new)
-                    str = str.replace(r, r_new)
-                }
-            } else if (str.match(omikuji_regex_g)) {
-                res = str.match(omikuji_regex_g)
-                for (let r of res) {
-                    // alert(r)
-                    r_new = r.split("\n").join('<br>')
-                    // alert(r_new)
-                    str = str.replace(r, r_new)
-                }
+        const times_regex_g = /x\d+( |　)(CCB|CC|RESB)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
+        const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
+        const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
+        if (str.match(times_regex_g)) {
+            res = str.match(times_regex_g)
+            for (let r of res) {
+            if (times_with_skill_g.test(r)) {
+                dice = r.match(times_with_skill_g)
+                value = dice[3]
+                skill = dice[4]
+                r_new = r.split("\n").join(`<br>&lt;=${value} 【${skill}】`)
+            }else{
+                r_new = r.split("\n").join('<br>')
             }
-            return str
+            // alert(r_new)
+            str = str.replace(r, r_new)
+            }
+        }
+        if (str.match(omikuji_regex_g)) {
+            res = str.match(omikuji_regex_g)
+            for (let r of res) {
+            r_new = r.split("\n").join('<br>')
+            // alert(r_new)
+            str = str.replace(r, r_new)
+            }
+        }
+        // console.log(str)
+        return str
         }
         function logFileData() {
             var result = window.confirm("ダウンロードしますか？");
@@ -596,7 +604,6 @@
                         "&lt;=10 【経理】", "&lt;=1 【考古学】", "&lt;=1 【コンピューター】", "&lt;=5 【心理学】",
                         "&lt;=1 【人類学】", "&lt;=1 【生物学】", "&lt;=1 【地質学】", "&lt;=1 【電子工学】", "&lt;=1 【天文学】",
                         "&lt;=10 【博物学】", "&lt;=1 【物理学】", "&lt;=5 【法律】", "&lt;=1 【薬学】", "&lt;=20 【歴史】"]
-                    var label = ""
                     var growth = {};
                     var regex = / 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
                     var regex_d100 = /.* \(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
@@ -607,6 +614,7 @@
 
                     for (let cont of content) {
                         var dice = {}
+                        var label = ""
                         if (regex_d100.test(cont)) {
                             var res = cont.match(regex_d100)[1]
                             if (cont.match(/決定的成功/)) {
