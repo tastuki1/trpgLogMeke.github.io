@@ -76,7 +76,6 @@
 
     h3 {
       margin: .5rem;
-      color: #707070;
     }
 
     .disp_check {
@@ -101,6 +100,14 @@
 
     .growth th {
       white-space: nowrap;
+    }
+
+    .growth caption {
+      padding-left: .5rem;
+    }
+
+    .growth td {
+      padding-left: 1rem;
     }
 
     caption {
@@ -143,13 +150,29 @@
       <input type="file" accept="text/html" id="inputFile" @change="readLogFile">
       <br><br>
 
-      <h2>成長技能チェック</h2>
+      <h3>成長技能チェック</h3>
+      <table class="growth">
+        <tr v-for="label in labels">
+          <td>
+            <input type="checkbox" :id="label.labelname" checked="checked" v-model="label.visible" />
+            <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
+          </td>
+          <td>
+            成長値：0/1d<input type="number" style="width:2rem;" v-model="label.value" />
+          </td>
+        </tr>
+      </table>
+      <br><br>
+
+      <h3>対象PC：
+        <select style="height:1.5rem; font-style: 1rem;"  v-model="growth_check_PC" @change="resetGrowth">
+          <template v-for="char in arr_growth_check">
+            <option :value="char">{{ char }}</option>
+          </template>
+        </select>
+      </h3>
       <br>
-      <select v-model="growth_check_PC">
-        <template v-for="char in arr_growth_check">
-          <option :value="char">{{ char }}</option>
-        </template>
-      </select>
+
       <!-- {{ growth_check_PC }} -->
 
       <table class=disp_check>
@@ -160,21 +183,6 @@
             <label class="switch-on" :for="tab.tabname">{{ tab.tabname }}</label>
           </td>
           <!-- <td>{{ tab_check }}</td> -->
-        </tr>
-        <tr>
-          <th>ダイス表示：</th>
-          <td v-for="label in labels">
-            <input type="checkbox" :id="label.labelname" checked="checked" v-model="label.visible" />
-            <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
-            <select v-model="label.value">
-              <option>0</option>
-              <option>3</option>
-              <option>4</option>
-              <option>5</option>
-              <option>6</option>
-              <option>10</option>
-            </select>
-          </td>
         </tr>
         <tr>
           <th>オプション：</th>
@@ -192,7 +200,6 @@
           </td>
         </tr>
       </table>
-      {{ status }}
 
       <div id="growth_area">
         <template v-if="result[growth_check_PC]">
@@ -200,7 +207,7 @@
           <template v-for="label in labels">
             <table class="growth" v-if="result[growth_check_PC][label.labelname]">
               <template v-if="label.visible">
-                <caption>◯{{ label.labelname }}</caption>
+                <caption>◯{{ label.labelname }}　0/1d{{ label.value }}</caption>
                 <template v-for="line in result[growth_check_PC][label.labelname]">
                   <template v-if="line.status">
                     <tr v-if="status&&tab_check.includes(line.tabname)">
@@ -232,14 +239,14 @@
         <template v-for="label in labels">
           <table class="growth">
             <template v-if="label.visible&&map_growth[label.labelname]">
-              <!-- <caption>◯{{ label.labelname }}</caption> -->
+              <caption>◯{{ label.labelname }}</caption>
               <template v-for="line in map_growth[label.labelname]">
                 <tr v-if="tab_check.includes(line.tabname)">
                   <td>1D100&lt;={{line.point}}＞{{line.value}}</td>
-                  <td v-if="line.value <= line.point">成功</td>
-                  <td v-else>失敗</td>
+                  <td style="color: blue;" v-if="line.value <= line.point">成功</td>
+                  <td style="color: red;" v-else>失敗</td>
                   <td>【{{line.ginou}}】</td>
-                  <td v-if="line.value > line.point">成長値：{{line.growth}}</td>
+                  <td v-if="line.value > line.point">成長値：{{line.growth}}/{{label.value}}</td>
                 </tr>
               </template>
             </template>
@@ -248,12 +255,14 @@
       </div>
       <br>
       <div>
-        <template v-if="sum_growth!=={}">
+        <template >
           <table class="growth">
-            <tr><th>合計成長値</th></tr>
-            <tr v-for="value,key in sum_growth">
-            <td>{{key}}：</td>
-            <td>{{value}}</td>
+            <tr><th>＜合計成長値＞</th></tr>
+            <template v-for="value,key in sum_growth">
+              <tr v-if="value>0">
+              <td>{{key}}：</td>
+              <td>{{value}}</td>
+            </template>
             </tr>
           </table>
         </template>
@@ -316,6 +325,12 @@
           .catch(e => {
             console.error(e)
           })
+      },
+      resetGrowth(event) {
+        // DBへの登録や正規表現での整形などの処理が書ける
+        this.growth_check_PC = event.target.value;
+        this.map_growth={};
+        this.sum_growth={};
       },
       analizeDice(tabname, charname, content) {
         var growth = {};
