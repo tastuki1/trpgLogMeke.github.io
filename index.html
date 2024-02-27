@@ -21,7 +21,7 @@
     //おみくじとx回ダイスへの対応用メソッド
     function readRegex(str) {
       const times_regex_g = /x\d+( |　)(CCB|CC|RESB)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-      const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
+      const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+)[\+-\d]* 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
       const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
       if (str.match(times_regex_g)) {
         res = str.match(times_regex_g)
@@ -144,71 +144,125 @@
       <br><br>
 
       <h2>成長技能チェック</h2>
+      <br>
+      <select v-model="growth_check_PC">
+        <template v-for="char in arr_growth_check">
+          <option :value="char">{{ char }}</option>
+        </template>
+      </select>
+      <!-- {{ growth_check_PC }} -->
+
       <table class=disp_check>
         <tr>
           <th>タブ表示　：</th>
           <td v-for="tab in tablist">
-            <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
+            <input type="checkbox" :id="tab.tabname" :value="tab.tabname" v-model="tab_check" />
             <label class="switch-on" :for="tab.tabname">{{ tab.tabname }}</label>
           </td>
+          <!-- <td>{{ tab_check }}</td> -->
         </tr>
         <tr>
           <th>ダイス表示：</th>
           <td v-for="label in labels">
             <input type="checkbox" :id="label.labelname" checked="checked" v-model="label.visible" />
             <label class="switch-on" :for="label.labelname">{{ label.labelname }}</label>
+            <select v-model="label.value">
+              <option>0</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>10</option>
+            </select>
           </td>
         </tr>
         <tr>
           <th>オプション：</th>
           <td>
-            <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
+            <input type="checkbox" id="tabname" v-model="tabname.visible" />
             <label class="switch-on" for="tabname">タブ名表示</label>
           </td>
           <td>
-            <input type="checkbox" id="value" checked="checked" v-model="value.visible" />
+            <input type="checkbox" id="value" v-model="value.visible" />
             <label class="switch-on" for="value">出目表示</label>
           </td>
           <td>
-            <input type="checkbox" id="status" checked="checked" v-model="status.visible" />
+            <input type="checkbox" id="status" v-model="status" />
             <label class="switch-on" for="status">ステ依存表示</label>
           </td>
         </tr>
       </table>
+      {{ status }}
 
       <div id="growth_area">
-        <template v-for="char in character">
-          <template v-if="result[char.charname]">
-            <h3 v-html="'＜'+char.charname+'＞'"></h3>
-            <template v-for="label in labels">
-              <table class="growth" v-if="result[char.charname][label.labelname]">
-                <template v-if="label.visible">
-                  <caption>◯{{ label.labelname }}</caption>
-                  <template v-for="line in result[char.charname][label.labelname]">
-                    <template v-if="line.status">
-                      <tr v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                        <td class="ginou">{{ line.ginou }}</td>
-                        <td v-if="value.visible">＞ {{ line.value }}</td>
-                      </tr>
-                    </template>
-                    <template v-else>
-                      <tr v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                        <td class="ginou">{{ line.ginou }}</td>
-                        <td v-if="value.visible">＞ {{ line.value }}</td>
-                      </tr>
-                    </template>
+        <template v-if="result[growth_check_PC]">
+          <h3 v-html="'＜'+growth_check_PC+'＞'"></h3>
+          <template v-for="label in labels">
+            <table class="growth" v-if="result[growth_check_PC][label.labelname]">
+              <template v-if="label.visible">
+                <caption>◯{{ label.labelname }}</caption>
+                <template v-for="line in result[growth_check_PC][label.labelname]">
+                  <template v-if="line.status">
+                    <tr v-if="status&&tab_check.includes(line.tabname)">
+                      <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
+                      <td class="ginou">{{ line.ginou }}</td>
+                      <td v-if="value.visible">＞ {{ line.value }}</td>
+                    </tr>
+                  </template>
+                  <template v-else>
+                    <tr v-if="tab_check.includes(line.tabname)">
+                      <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
+                      <td class="ginou">{{ line.ginou }}</td>
+                      <td v-if="value.visible">＞ {{ line.value }}</td>
+                    </tr>
                   </template>
                 </template>
-              </table>
-            </template>
-            <br>
+              </template>
+            </table>
           </template>
+          <br>
         </template>
       </div>
       <br>
-      <button type="button" @click="copy">コピーする</button><br>
+      <button type="button" @click="copy">コピーする</button>
+      <button type="button" @click="growthDice">成長ダイスを振る</button>
+
+      <br><br>
+      <div>
+        <template v-for="label in labels">
+          <table class="growth">
+            <template v-if="label.visible&&map_growth[label.labelname]">
+              <!-- <caption>◯{{ label.labelname }}</caption> -->
+              <template v-for="line in map_growth[label.labelname]">
+                <tr v-if="tab_check.includes(line.tabname)">
+                  <td>1D100&lt;={{line.point}}＞{{line.value}}</td>
+                  <td v-if="line.value <= line.point">成功</td>
+                  <td v-else>失敗</td>
+                  <td>【{{line.ginou}}】</td>
+                  <td v-if="line.value > line.point">成長値：{{line.growth}}</td>
+                </tr>
+              </template>
+            </template>
+          </table>
+        </template>
+      </div>
+      <br>
+      <div>
+        <template v-if="sum_growth!=={}">
+          <table class="growth">
+            <tr><th>合計成長値</th></tr>
+            <tr v-for="value,key in sum_growth">
+            <td>{{key}}：</td>
+            <td>{{value}}</td>
+            </tr>
+          </table>
+        </template>
+      </div>
+        
+
+
+      
+      
     </div>
 </body>
 
@@ -221,29 +275,34 @@
       result: [],
       tablist: [],
       character: [],
+      tab_check: [],
       tabname: { visible: true },
       value: { visible: true },
-      status: { visible: true },
+      status: true,
+      map_growth: {},
+      sum_growth: {},
       labels: [
-        { labelname: "クリティカル", visible: true },
-        { labelname: "スペシャル", visible: true },
-        { labelname: "ファンブル", visible: true },
-        { labelname: "初期値成功", visible: true }
+        {labelname: "クリティカル",visible: true, value: 6 },
+        {labelname: "スペシャル", visible: true, value: 3 },
+        {labelname: "ファンブル",visible: true, value: 3 },
+        {labelname: "初期値成功",visible: true, value: 6 }
       ],
       copyText: "",
       defaultDice: ["&lt;=25 【キック】", "&lt;=25 【組み付き】", "&lt;=50 【こぶし（パンチ）】",
-          "&lt;=10 【頭突き】", "&lt;=25 【投擲】", "&lt;=1 【マーシャルアーツ】", "&lt;=20 【拳銃】",
-          "&lt;=15 【サブマシンガン】", "&lt;=30 【ショットガン】", "&lt;=15 【マシンガン】", "&lt;=25 【ライフル】",
-          "&lt;=30 【応急手当】", "&lt;=1 【鍵開け】", "&lt;=15 【隠す】", "&lt;=10 【隠れる】", "&lt;=25 【聞き耳】",
-          "&lt;=10 【忍び歩き】", "&lt;=10 【写真術】", "&lt;=1 【精神分析】", "&lt;=10 【追跡】", "&lt;=40 【登攀】",
-          "&lt;=25 【図書館】", "&lt;=25 【目星】", "&lt;=20 【運転】", "&lt;=20 【機械修理】",
-          "&lt;=1 【重機械操作】", "&lt;=5 【乗馬】", "&lt;=25 【水泳】", "&lt;=5 【製作】", "&lt;=1 【操縦】",
-          "&lt;=25 【跳躍】", "&lt;=10 【電気修理】", "&lt;=10 【ナビゲート】", "&lt;=1 【変装】",
-          "&lt;=5 【言いくるめ】", "&lt;=15 【信用】", "&lt;=15 【説得】", "&lt;=5 【値切り】", "&lt;=70 【母国語】",
-          "&lt;=5 【医学】", "&lt;=5 【オカルト】", "&lt;=1 【化学】", "&lt;=0 【クトゥルフ神話】", "&lt;=5 【芸術】",
-          "&lt;=10 【経理】", "&lt;=1 【考古学】", "&lt;=1 【コンピューター】", "&lt;=5 【心理学】",
-          "&lt;=1 【人類学】", "&lt;=1 【生物学】", "&lt;=1 【地質学】", "&lt;=1 【電子工学】", "&lt;=1 【天文学】",
-          "&lt;=10 【博物学】", "&lt;=1 【物理学】", "&lt;=5 【法律】", "&lt;=1 【薬学】", "&lt;=20 【歴史】"]
+        "&lt;=10 【頭突き】", "&lt;=25 【投擲】", "&lt;=1 【マーシャルアーツ】", "&lt;=20 【拳銃】",
+        "&lt;=15 【サブマシンガン】", "&lt;=30 【ショットガン】", "&lt;=15 【マシンガン】", "&lt;=25 【ライフル】",
+        "&lt;=30 【応急手当】", "&lt;=1 【鍵開け】", "&lt;=15 【隠す】", "&lt;=10 【隠れる】", "&lt;=25 【聞き耳】",
+        "&lt;=10 【忍び歩き】", "&lt;=10 【写真術】", "&lt;=1 【精神分析】", "&lt;=10 【追跡】", "&lt;=40 【登攀】",
+        "&lt;=25 【図書館】", "&lt;=25 【目星】", "&lt;=20 【運転】", "&lt;=20 【機械修理】",
+        "&lt;=1 【重機械操作】", "&lt;=5 【乗馬】", "&lt;=25 【水泳】", "&lt;=5 【製作】", "&lt;=1 【操縦】",
+        "&lt;=25 【跳躍】", "&lt;=10 【電気修理】", "&lt;=10 【ナビゲート】", "&lt;=1 【変装】",
+        "&lt;=5 【言いくるめ】", "&lt;=15 【信用】", "&lt;=15 【説得】", "&lt;=5 【値切り】", "&lt;=70 【母国語】",
+        "&lt;=5 【医学】", "&lt;=5 【オカルト】", "&lt;=1 【化学】", "&lt;=0 【クトゥルフ神話】", "&lt;=5 【芸術】",
+        "&lt;=10 【経理】", "&lt;=1 【考古学】", "&lt;=1 【コンピューター】", "&lt;=5 【心理学】",
+        "&lt;=1 【人類学】", "&lt;=1 【生物学】", "&lt;=1 【地質学】", "&lt;=1 【電子工学】", "&lt;=1 【天文学】",
+        "&lt;=10 【博物学】", "&lt;=1 【物理学】", "&lt;=5 【法律】", "&lt;=1 【薬学】", "&lt;=20 【歴史】"],
+      growth_check_PC: "",
+      arr_growth_check: []
     },
     methods: {
       copy() {
@@ -260,7 +319,7 @@
       },
       analizeDice(tabname, charname, content) {
         var growth = {};
-        var regex = / 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+        var regex = /(\d+)[+-\d]* 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
         var regex_d100 = /\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
         var content = content.split("<br>")
 
@@ -272,7 +331,6 @@
             var res = cont.match(regex_d100)[1]
             if (cont.match(/決定的成功/)) {
               label = "クリティカル";
-              console.log(cont)
             } else if (cont.match(/スペシャル/)) {
               label = "スペシャル";
             } else if (cont.match(/致命的失敗/)) {
@@ -292,16 +350,19 @@
                 status = true
               }
               if (regex.test(cont)) {
-                skill = cont.match(regex)[1]
+                point = cont.match(regex)[1];
+                skill = cont.match(regex)[2];
               }
               if (!this.result[charname]) {
-                this.result[charname] = {}
-                this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, status: status }]
+                this.result[charname] = {};
+                this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, point: point, status: status }]
               } else if (!this.result[charname][label]) {
-                this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, status: status }]
+                this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, point: point, status: status }]
               } else {
-                this.result[charname][label].push({ tabname: tabname, ginou: skill, value: res, status: status })
+                this.result[charname][label].push({ tabname: tabname, ginou: skill, value: res, point: point, status: status })
               }
+              this.arr_growth_check.push(charname);
+              this.tab_check.push(tabname);
             }
           }
         }
@@ -359,6 +420,56 @@
           if (a.charname > b.charname) return 1;
           return 0
         })
+        const set1 = new Set(this.arr_growth_check);
+        this.arr_growth_check = [...set1];
+        const set2 = new Set(this.tab_check);
+        this.tab_check = [...set2];
+
+        // console.log(newArr)
+      },
+      growthDice() {
+        this.map_growth = {}
+        this.sum_growth = {}
+        for(let label of this.labels){
+          // console.log(label.labelname)
+          if (label.visible && this.result[this.growth_check_PC][label.labelname]){
+            for (let line of this.result[this.growth_check_PC][label.labelname]) {
+              var growthDice = 0;
+              if (this.tab_check.includes(line.tabname)) {
+                var hundreddice = Math.floor(Math.random() * 100 + 1);
+                if (hundreddice > line.point) {
+                  growthDice = Math.floor(Math.random() * label.value + 1);
+                }
+                console.log(line.ginou)
+                if (!status) {
+                  if (!line.status){
+                    if (!this.map_growth[label.labelname]){
+                      this.map_growth[label.labelname] = [{tabname:line.tabname, ginou:line.ginou, value:hundreddice, point:line.point, growth:growthDice}]
+                    }else{
+                      this.map_growth[label.labelname].push({tabname:line.tabname, ginou:line.ginou, value:hundreddice, point:line.point, growth:growthDice})
+                    }
+                    if(!this.sum_growth[line.ginou]){
+                      this.sum_growth[line.ginou]= growthDice
+                    }else{
+                      this.sum_growth[line.ginou]+= growthDice
+                    }
+                  }
+                }else{
+                  if (!this.map_growth[label.labelname]){
+                      this.map_growth[label.labelname] =[{tabname:line.tabname, ginou:line.ginou, value:hundreddice, point:line.point, growth:growthDice}]
+                  }else{
+                    this.map_growth[label.labelname].push({tabname:line.tabname, ginou:line.ginou, value:hundreddice, point:line.point, growth:growthDice})
+                  }
+                  if(!this.sum_growth[line.ginou]){
+                    this.sum_growth[line.ginou]= growthDice
+                  }else{
+                    this.sum_growth[line.ginou]+= growthDice
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   })

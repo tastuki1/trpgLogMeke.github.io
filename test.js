@@ -1,9 +1,4 @@
 function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
-  // this.logFileName = logFileName;
-  // this.nameColor = nameColor;
-  // this.backColor = backColor;
-  // this.viewCheck = viewCheck;
-  // this.content = content;
   var style = `
 <style>
   @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
@@ -22,10 +17,19 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
     z-index: 999;
     top:0;
     left:0;
-    height:6rem;
+  }
+  details {
+    background-color: ${backColor};
+    padding: .3rem;
+    margin: 0rem;
+  }
+  summary {
+    padding-left: 3rem;
+    margin: 0rem;
+    color: ${nameColor};
   }
   h1 {
-    padding: .5rem .5rem .5rem 3rem;
+    padding: .3rem .3rem .3rem 3rem;
     margin: 0rem;
     color: ${nameColor};
     font-family: 'New Tegomin', serif;
@@ -43,7 +47,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
   }
   .box5 {
     padding: 2rem;
-    margin: 6.2rem 2rem 2rem;
+    margin: 6rem 2rem 2rem;
     border: double 5px ${backColor};
     background-color: #ffffff;
   }
@@ -97,18 +101,24 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
       font-size: 14px;
     }
     h1 {
-      padding: .5rem .5rem .5rem 2rem;
+      padding: .2rem .2rem .2rem 1.5rem;
       font-size: 27px;
     }
     .viewcheck{
-      padding-left: 2rem;
+      padding-left: 1.5rem;
+    }
+    details {
+      padding: .2rem;
+    }
+    summary {
+      padding-left: 1.5rem;
     }
     main {
       width: 100%;
     }
     .box5{
       padding: 0.8rem;
-      margin: 6.2rem 1rem 1rem;
+      margin: 5.5rem .6rem .6rem;
     }
     bbbbb {
       display: block;
@@ -150,7 +160,10 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
     <body>
         <div class="header">
             <h1>${logFileName}</h1>
-            ${viewCheck}
+            <details>
+              <summary>タブ表示</summary>
+              ${viewCheck}
+            </details>
         </div>
         <div class="box5">
             ${content}

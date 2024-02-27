@@ -28,11 +28,12 @@
             for (let r of res) {
             if (times_with_skill_g.test(r)) {
                 dice = r.match(times_with_skill_g)
+                CCorCCB = dice[2]
                 value = dice[3]
                 skill = dice[4]
-                r_new = r.split("\n").join(`<br>&lt;=${value} 【${skill}】 `)
+                r_new = r.split("\n(1D100").join(`<br>${CCorCCB}&lt;=${value} 【${skill}】 (1D100`).split("\n").join('<br>').replaceAll('<br><br>','<br>')
             }else{
-                r_new = r.split("\n").join('<br>')
+                r_new = r.split("\n").join('<br>').replaceAll('<br><br>','<br>')
             }
             // alert(r_new)
             str = str.replace(r, r_new)
@@ -236,7 +237,12 @@
             margin: 0;
             color: #707070;
         }
-
+        
+        bbbbb {
+            display: block;
+            content: "";
+            margin: 0.6rem;
+        }
 
         @media screen and (max-width: 480px) {
             html {
@@ -346,8 +352,7 @@
                                                     </tr>
                                                 </template>
                                                 <template v-else>
-                                                    <tr
-                                                        v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
+                                                    <tr v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
                                                         <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
                                                         <td class="ginou">{{ line.ginou }}</td>
                                                         <td v-if="value.visible">＞ {{ line.value }}</td>
@@ -477,13 +482,13 @@
 
             <div id="viewCheckText" style="display: none;">
                 <div class="viewCheck">
-                    <template v-for="tab in tablist">
+                    <span v-for="tab in tablist">
                         <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
                             <input type="checkbox" :id="tab.tabname" checked="checked"
                                 :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
                             <span :id="tab.tabname" v-html="tab.tabname"></span>
                         </label>
-                    </template>
+                    </span>
                 </div>
             </div>
 
@@ -495,9 +500,12 @@
                         <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
                             <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
                                 <b v-html="con.charname" v-if="con.charname!==''"></b>
-                                <template v-for="c in con.line">
+                                <template v-for="ccc in con.line">
+                                    <template v-for="c in ccc">
                                     <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
                                     <span v-else v-html="c.content"></span><br>
+                                    </template>
+                                    <bbbbb></bbbbb>
                                 </template>
                             </p>
                         </template>
@@ -505,9 +513,12 @@
                             <div class="box">
                                 <span class="box-title" v-html="con.charname"></span>
                                 <p>
-                                    <template v-for="c in con.line">
-                                        <span v-html="c.content"><br></span>
-                                        <br>
+                                    <template v-for="ccc in con.line">
+                                        <template v-for="c in ccc">
+                                            <span v-html="c.content"><br></span>
+                                            <br>
+                                        </template>
+                                        <bbbbb></bbbbb>
                                     </template>
                                 </p>
                             </div>
@@ -571,25 +582,6 @@
                         "&lt;=10 【博物学】", "&lt;=1 【物理学】", "&lt;=5 【法律】", "&lt;=1 【薬学】", "&lt;=20 【歴史】"]
         },
         methods: {
-            htmlSafe(str) {
-                if (typeof str !== 'string') return str;
-                var patterns = {
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '&': '&amp;',
-                    '"': '&quot;',
-                    '\'': '&#x27;',
-                    '`': '&#x60;',
-                    ",": "&#44;",
-                    ".": "&#46;",
-                    "(": "&#40;",
-                    ")": "&#41;",
-                    " ": "&#32;"
-                };
-                return str.replace(/[<>&"'`,.()]/g, function (match) {
-                    return patterns[match];
-                })
-            },
             copy() {
                 const copyText = this.$el.querySelector('#growth_area').innerText
                 navigator.clipboard
@@ -615,13 +607,25 @@
                     for (let cont of content) {
                         var dice = {}
                         var label = ""
-                        if (regex_d100.test(cont)) {
+                        if (cont.trim() === ''){
+                            if (num >= 0 && this.component[num].tabname === tabname) {
+                                var last = this.component[num].value.length - 1
+                                if (last >= 0 && this.component[num].value[last].charname === charname) {
+                                    this.component[num].value[last].line.push(temp_cont);
+                                } else {
+                                    this.component[num].value.push({ charname: charname, line: [temp_cont] });
+                                }
+                            } else {
+                                this.component.push({ tabname: tabname, value: [{ charname: charname, line: [temp_cont] }] });
+                            }
+                            temp_cont = [];
+                            continue;
+                        }else if (regex_d100.test(cont)) {
                             // console.log(cont)
                             var res = cont.match(regex_d100)[1]
                             if (cont.match(/決定的成功/)) {
                                 dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
                                 label = "クリティカル"
-                                console.log(cont)
                             } else if (cont.match(/スペシャル/)) {
                                 dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
                                 label = "スペシャル"
@@ -664,12 +668,12 @@
                     if (num >= 0 && this.component[num].tabname === tabname) {
                         var last = this.component[num].value.length - 1
                         if (last >= 0 && this.component[num].value[last].charname === charname) {
-                            this.component[num].value[last].line.push(...temp_cont)
+                            this.component[num].value[last].line.push(temp_cont);
                         } else {
-                            this.component[num].value.push({ charname: charname, line: temp_cont })
+                            this.component[num].value.push({ charname: charname, line: [temp_cont] });
                         }
                     } else {
-                        this.component.push({ tabname: tabname, value: [{ charname: charname, line: temp_cont }] })
+                        this.component.push({ tabname: tabname, value: [{ charname: charname, line: [temp_cont] }] });
                     }
                 }
             },
@@ -686,7 +690,6 @@
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
                     var content = reader.result
-                    // content = readRegex(content).split(/\n/)
                     if(this.readLog(readRegex(content))){
                         alert("ファイル読み込み完了")
                     }else{
@@ -705,12 +708,7 @@
                 ary = []
                 var errorCount = 0
                 var contentArray = content.split(/\n\s\s\s\s\n/);
-                // for (var i = 0; i < 10; i++) {
-                // //     content.shift()
-                //     alert(contentArray[i])
-                // // }
-                // contentArray.splice(0, 1).splice(contentArray.length, 1)
-                // try{
+                try{
                     for(block of contentArray){
                         var line = block.split(/\n/)
                         if(!line[1].match(/<span> \[(.*)\]</)){
@@ -722,14 +720,12 @@
                                 continue
                             }
                         }
-                    // content.chunk(8).forEach(line => {
-                        
-                        tabname = this.htmlSafe(line[1].match(/<span> \[(.*)\]</)[1]);
+                        tabname = line[1].match(/<span> \[(.*)\]</)[1];
                         if (!this.tablist.some((u) => u.tabname === tabname)) {
                             this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
                         }
                         if (line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)) {
-                            charname = this.htmlSafe(line[2].match(/>(.*)</)[1])
+                            charname = line[2].match(/>(.*)</)[1]
                             if (list.includes(charname)) {
                                 style = "character"
                                 ary = ary.filter(item => item.charname != charname)
@@ -758,9 +754,9 @@
                         return 0
                     })  
                     return true
-                // }catch{
-                //     return false
-                // }
+                }catch{
+                    return false
+                }
             }
         }
     })

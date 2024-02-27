@@ -10,9 +10,11 @@ function makeLogHtml(tablist, character, backColor, nameColor, logFileName, cont
   border-left: 3px solid ${tab.color};
   }`
       viewcheck = viewcheck + `
+      <li>
       <label :for= "tab[tabname]">
       <input type="checkbox" :id="tab[tabname]" checked="checked" :onchange="'c_disp(this, '+tab[tabname]+')'"/>tab[tabname]
       </label>
+      </li>
       `
       }
   }
@@ -158,9 +160,10 @@ ${style}
 <body>
 <div class="header">
 <h1><${logFileName}</h1>
-<div class="viewcheck">
-  ${viewText}
-</div>
+<details>
+　<summary>タブ表示切り替え</summary>
+　${viewcheck}
+</details>
 </div>
 <div class="box5">
 ${contentText}
