@@ -179,6 +179,12 @@
             color: #707070;
         }
 
+        .char_input {
+            width:20rem;
+            height: 4rem;
+            font-size: 14px;
+        }
+
 
         @media screen and (max-width: 480px) {
             html {
@@ -202,6 +208,10 @@
                 padding: .5rem .2rem;
 
             }
+
+            .char_input {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -214,17 +224,17 @@
             <input type="text" id="char_name" v-model="char_name">
             <br>
             <h4>ステータス</h4>
-            <textarea id="char_data" v-model="char_data" style="width:20rem; height: 4rem;"
+            <textarea id="char_data" v-model="char_data" class ="char_input"
             placeholder="（例1）HP:XX POW:XX
 （例2）DEX：XX,STR：XX
 ※HP/MP/SANは能力値からも算出可能"></textarea><br>
             <h4>技能</h4>
-            <textarea id="char_skill" v-model="char_skill" style="width:20rem; height: 4rem;"
+            <textarea id="char_skill" v-model="char_skill" class ="char_input"
             placeholder="（例1）日本刀:85 医学：60
 （例2）＜こぶし＞65%,«回避»70%
 ※アイデアなどは能力値からも算出可能"></textarea><br>
             <h4>メモ</h4>
-            <textarea id="char_data" v-model="charCopyData.data.memo" style="width:20rem; height: 4rem;"
+            <textarea id="char_memo" v-model="charCopyData.data.memo" class ="char_input"
             placeholder="コマのメモ欄に出力されます"></textarea><br><br>
             <input type="checkbox" id="secret" v-model="secretDice">シークレットダイスにする<br>
             <input type="radio" id="dice_ccb" value="CCB" v-model="dice">
