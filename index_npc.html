@@ -357,10 +357,11 @@
                                 "max":  hash_param['POW']
                             });
                         }else if(element==="HP" && 'CON' in hash_param && 'SIZ' in hash_param){
+                            var HP = Math.ceil(hash_param['CON']/2 + hash_param['SIZ']/2)
                             this.charCopyData.data.status.push({
                                 "label": "HP",
-                                "value": hash_param['CON']/2 + hash_param['SIZ']/2,
-                                "max":  hash_param['CON']/2 + hash_param['SIZ']/2
+                                "value": HP,
+                                "max":  HP
                             });
                         }
                     }
