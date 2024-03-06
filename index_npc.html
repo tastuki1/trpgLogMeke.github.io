@@ -256,9 +256,6 @@
             char_name:"",
             char_data:"",
             char_skill:"",
-            hash_skill:{},
-            hash_status:{},
-            hash_param:{},
             status:["HP","MP","SAN"],
             param:["STR","CON","DEX","POW","APP","SIZ","INT","EDU"],
             charCopyData: {
@@ -294,7 +291,6 @@
                 this.charCopyData.data.params=[]
                 this.charCopyData.data.status=[]
                 this.charCopyData.data.commands=""
-                this.charCopyData.data.commands=""
                 this.charCopyData.data.initiative=0
             },
             makeNPC() {
@@ -302,11 +298,14 @@
                 this.charCopyData.data.name=this.char_name
                 // 技能のダイスコマンド用の配列を作成
                 array_commands=[];
+                hash_param={};
+                hash_skill={};
+                hash_status={};
                 const re = /[:：\/\>＞»》〉）)\<＜«《〈（(\n]*(\D+)[:：\/\>＞»》〉）)】]+(\d{1,3})[％\%\,\n\s]*/g
                 var match = this.char_skill.matchAll(re)
                 if (match){
                     Array.from(match).forEach(element => {
-                        this.hash_skill[element[1]] = element[2];
+                        hash_skill[element[1]] = element[2];
                     })
                 }
                 // STRなどのパラメータを追加
@@ -320,17 +319,17 @@
                         })
                         if(element==="DEX"){
                             this.charCopyData.data.initiative=parseInt(match[1])
-                            if(!('回避' in this.hash_skill)){
-                                this.hash_skill["回避"] = match[1]*2
+                            if(!('回避' in hash_skill)){
+                                hash_skill["回避"] = match[1]*2
                             }
-                        }else if(element==="INT" && !('アイデア' in this.hash_skill)){
-                            this.hash_skill["アイデア"] = match[1]*5
-                        }else if(element==="EDU" && !('知識' in this.hash_skill)){
-                            this.hash_skill["知識"] = match[1]*5
-                        }else if(element==="POW" && !('幸運' in this.hash_skill)){
-                            this.hash_skill["幸運"] = match[1]*5
+                        }else if(element==="INT" && !('アイデア' in hash_skill)){
+                            hash_skill["アイデア"] = match[1]*5
+                        }else if(element==="EDU" && !('知識' in hash_skill)){
+                            hash_skill["知識"] = match[1]*5
+                        }else if(element==="POW" && !('幸運' in hash_skill)){
+                            hash_skill["幸運"] = match[1]*5
                         }
-                        this.hash_param[element] = match[1];
+                        hash_param[element] = match[1];
                     }
                 });
                 // SANなどのステータスを追加
@@ -338,30 +337,30 @@
                     const re = new RegExp(element + "[:：\/\>＞»＝\=》〉]{0,2}([0-9]{1,3})", "g");
                     var match = re.exec(this.char_data)
                     if (match){
-                        this.hash_status[element] = match[1];
+                        hash_status[element] = match[1];
                         this.charCopyData.data.status.push({
                             "label": element,
                             "value": match[1],
                             "max": match[1]
                         });
                     }else{
-                        if(element==="SAN" && "POW" in this.hash_param){
+                        if(element==="SAN" && "POW" in hash_param){
                             this.charCopyData.data.status.push({
                                 "label": "SAN",
-                                "value": this.hash_param['POW']*5,
-                                "max":  this.hash_param['POW']*5
+                                "value": hash_param['POW']*5,
+                                "max":  hash_param['POW']*5
                             });
-                        }else if(element==="MP" && "POW" in this.hash_param){
+                        }else if(element==="MP" && "POW" in hash_param){
                             this.charCopyData.data.status.push({
                                 "label": "MP",
-                                "value": this.hash_param['POW'],
-                                "max":  this.hash_param['POW']
+                                "value": hash_param['POW'],
+                                "max":  hash_param['POW']
                             });
-                        }else if(element==="HP" && 'CON' in this.hash_param && 'SIZ' in this.hash_param){
+                        }else if(element==="HP" && 'CON' in hash_param && 'SIZ' in hash_param){
                             this.charCopyData.data.status.push({
                                 "label": "HP",
-                                "value": this.hash_param['CON']/2 + this.hash_param['SIZ']/2,
-                                "max":  this.hash_param['CON']/2 + this.hash_param['SIZ']/2
+                                "value": hash_param['CON']/2 + hash_param['SIZ']/2,
+                                "max":  hash_param['CON']/2 + hash_param['SIZ']/2
                             });
                         }
                     }
@@ -371,10 +370,10 @@
                 }else{
                     this.secret = ""
                 }
-                for (var key in this.hash_skill) {
-                    array_commands.push(this.secret+this.dice+"<="+this.hash_skill[key]+" 【"+key+"】")
+                for (var key in hash_skill) {
+                    array_commands.push(this.secret+this.dice+"<="+hash_skill[key]+" 【"+key+"】")
                 }
-                for (var key in this.hash_param) {
+                for (var key in hash_param) {
                     array_commands.push(this.secret+this.dice+"<={"+key+"}*5 【"+key+"×5】")
                 };
                 // コマンドテキストを作成
@@ -384,7 +383,7 @@
                 setTimeout(() => this.copyOperation(str), 100);
             },
             async copyOperation(text) {
-                await navigator.clipboard.writeText(text)
+                await navigator.clipboard.writeText(text);
                 alert("コマ作ったよ！")
             }
         }
