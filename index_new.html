@@ -482,11 +482,11 @@
                 <div class="viewCheck">
                     <span v-for="tab in tablist">
                         <template v-if="tab.visible">
-                            <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
-                                <input type="checkbox" :id="tab.tabname" checked="checked"
-                                    :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
-                                <span :id="tab.tabname" v-html="tab.tabname"></span>
-                            </label>
+                        <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
+                            <input type="checkbox" :id="tab.tabname" checked="checked"
+                                :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
+                            <span :id="tab.tabname" v-html="tab.tabname"></span>
+                        </label>
                         </template>
                     </span>
                 </div>
@@ -495,48 +495,48 @@
             
             <div id="contentText" style="display: none;">
                 <template v-for="tab in component">
-                    <div v-if="tablist.find((t) => t.tabname === tab.tabname).visible"
-                        :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color"
-                        :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : tab.tabname+' tab'">
-                        <template v-for="con in tab.value">
-                            <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
-                                <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
-                                    <b v-html="con.charname" v-if="con.charname!==''"></b>
+                <div v-if="tablist.find((t) => t.tabname === tab.tabname).visible"
+                    :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color"
+                    :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : tab.tabname+' tab'">
+                    <template v-for="con in tab.value">
+                        <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
+                            <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
+                                <b v-html="con.charname" v-if="con.charname!==''"></b>
+                                <template v-for="ccc in con.line">
+                                    <template v-for="c in ccc">
+                                    <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
+                                    <span v-else v-html="c.content"></span><br>
+                                    </template>
+                                    <bbbbb></bbbbb>
+                                </template>
+                            </p>
+                        </template>
+                        <template v-else-if="character.find((u) => u.charname === con.charname).style==='item'">
+                            <div class="box">
+                                <span class="box-title" v-html="con.charname"></span>
+                                <p>
                                     <template v-for="ccc in con.line">
                                         <template v-for="c in ccc">
-                                        <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
-                                        <span v-else v-html="c.content"></span><br>
+                                            <span v-html="c.content"><br></span>
+                                            <br>
                                         </template>
                                         <bbbbb></bbbbb>
                                     </template>
                                 </p>
-                            </template>
-                            <template v-else-if="character.find((u) => u.charname === con.charname).style==='item'">
-                                <div class="box">
-                                    <span class="box-title" v-html="con.charname"></span>
-                                    <p>
-                                        <template v-for="ccc in con.line">
-                                            <template v-for="c in ccc">
-                                                <span v-html="c.content"><br></span>
-                                                <br>
-                                            </template>
-                                            <bbbbb></bbbbb>
-                                        </template>
-                                    </p>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <h3 v-html="con.charname"></h3>
-                                <p class="KP" style="color:#707070">
-                                    <template v-for="c in con.line">
-                                        <span v-html="c.content"><br></span>
-                                        <br>
-                                    </template>
-                                </p>
-                            </template>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <h3 v-html="con.charname"></h3>
+                            <p class="KP" style="color:#707070">
+                                <template v-for="c in con.line">
+                                    <span v-html="c.content"><br></span>
+                                    <br>
+                                </template>
+                            </p>
                         </template>
                     </template>
                 </div>
+                </template>
             </div>
         </div>
     </div>
