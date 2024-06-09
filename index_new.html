@@ -8,6 +8,7 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript" src="./test.js"></script>
     <script type="text/javascript">
         Array.prototype.chunk = function (n) {
@@ -53,12 +54,12 @@
         function logFileData() {
             var result = window.confirm("ダウンロードしますか？");
             if (result) {
-                var content = document.getElementById('contentText').innerHTML.split("><").join(">\n<")
-                var logFileName = document.getElementsByName('logFileName')[0].value
-                var nameColor = document.getElementsByName('nameColor')[0].value
-                var backColor = document.getElementsByName('backColor')[0].value
-                var viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<")
-                var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content)
+                var content = document.getElementById('contentText').innerHTML.split("><").join(">\n<");
+                var logFileName = document.getElementsByName('logFileName')[0].value;
+                var nameColor = document.getElementsByName('nameColor')[0].value;
+                var backColor = document.getElementsByName('backColor')[0].value;
+                var viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<");
+                var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content);
                 const blob = new Blob([copyText], { type: "text/html" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -231,7 +232,7 @@
             margin: 0;
             color: #707070;
         }
-        
+
         bbbbb {
             display: block;
             content: "";
@@ -430,12 +431,15 @@
             <table width=300px class="tabs">
                 <tbody>
                     <tr>
-                        <th align="left">タブ色設定</th>
+                        <th colspan="3" align="left">タブ設定(チェックしたものを出力)</th>
                     </tr>
                     <template v-for="tab in tablist">
-                        <tr v-if="tab.tabname!=='メイン' && tab.tabname!=='情報'">
-                            <td v-html="tab.tabname"></td>
+                        <tr>
                             <td>
+                                <input type="checkbox" name="tablist[][visible]" v-model="tab.visible" />
+                            </td>
+                            <td v-html="tab.tabname"></td>
+                            <td v-if="tab.tabname!=='メイン' && tab.tabname!=='情報'">
                                 <input type="color" name="tablist[][color]" v-model="tab.color" />
                             </td>
                         </tr>
@@ -477,17 +481,21 @@
             <div id="viewCheckText" style="display: none;">
                 <div class="viewCheck">
                     <span v-for="tab in tablist">
+                        <template v-if="tab.visible">
                         <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
                             <input type="checkbox" :id="tab.tabname" checked="checked"
                                 :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
                             <span :id="tab.tabname" v-html="tab.tabname"></span>
                         </label>
+                        </template>
                     </span>
                 </div>
             </div>
-
+            <button onclick="logFileData()">ダウンロード</button>
+            
             <div id="contentText" style="display: none;">
-                <div v-for="tab in component"
+                <template v-for="tab in component">
+                <div v-if="tablist.find((t) => t.tabname === tab.tabname).visible"
                     :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color"
                     :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : tab.tabname+' tab'">
                     <template v-for="con in tab.value">
@@ -528,13 +536,12 @@
                         </template>
                     </template>
                 </div>
+                </template>
             </div>
         </div>
-        <button onclick="logFileData()">ダウンロード</button>
     </div>
 </body>
 <script>
-
     var makeLog = new Vue({
         el: "#makeLog",
         data: {
