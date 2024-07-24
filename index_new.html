@@ -722,6 +722,12 @@
                             }
                         }
                         tabname = line[1].match(/<span> \[(.*)\]</)[1];
+
+                        // ココフォリアアプデ暫定対応
+                        if(tabname=="main"){tabname="メイン"}
+                        else if(tabname=="info"){tabname="情報"}
+                        else if(tabname=="other"){tabname="雑談"}
+
                         if (!this.tablist.some((u) => u.tabname === tabname)) {
                             this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
                         }
