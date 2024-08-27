@@ -7,7 +7,7 @@ function returnTemplate(logFileName, nameColor, backColor, viewCheck, content) {
   font-size: 16px;
   }
   body {
-    background-color: ${backColor};
+    background-color: ${frameColor};
     font-family: 'Hiragino Sans', sans-serif;
   }
   .header{
