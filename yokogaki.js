@@ -64,6 +64,7 @@ function returnTemplate(logFileName, title, nameColor, frameColor, backColor, vi
     background: rgba(127, 127, 127, 0.1);
     overflow-wrap: break-word;
   }
+  
   .box {
     position: relative;
     margin: 2rem 1rem;
