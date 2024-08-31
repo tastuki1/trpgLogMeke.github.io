@@ -69,7 +69,7 @@ function returnTemplate(logFileName, title, nameColor, frameColor, backColor, vi
     position: relative;
     margin: 2rem 1rem;
     padding: 1rem 1.5rem .5rem 1rem;
-    border: solid 3px #707070;
+    border: solid 3px #888888;
     border-radius: 8px;
     background: ${backColor};
     line-height: 1.5;
@@ -82,12 +82,12 @@ function returnTemplate(logFileName, title, nameColor, frameColor, backColor, vi
     padding: 0 .5rem;
     line-height: 1;
     background: ${backColor};
-    color: #707070;
+    color: #888888;
     font-weight: bold;
   }
   .box p {
     margin: 0;
-    color: #707070;
+    color: #888888;
   }
   b {
     display: block;

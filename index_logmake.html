@@ -69,7 +69,7 @@
 
         h3 {
             margin: .5rem;
-            color: #707070
+            color: #888888
         }
 
         .disp_check {
@@ -180,7 +180,7 @@
             position: relative;
             margin: 2rem 1rem;
             padding: 1rem 1.5rem .5rem 1rem;
-            border: solid 3px #707070;
+            border: solid 3px #888888;
             border-radius: 8px;
             background: #fff;
             line-height: 1.5;
@@ -194,13 +194,13 @@
             padding: 0 .5rem;
             line-height: 1;
             background: #fff;
-            color: #707070;
+            color: #888888;
             font-weight: bold;
         }
 
         .box p {
             margin: 0;
-            color: #707070;
+            color: #888888;
         }
 
         .bbb {
@@ -617,6 +617,15 @@
                     this.regex = /\s*【(.*)】.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
                     this.regex_d100 = /.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
                     this.times_regex_g = /x\d+( |　)(CC|RES|CBR)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(クリティカル|スペシャル|成功|失敗)/g;
+                    this.labels = [
+                        { labelname: "クリティカル", visible: true },
+                        { labelname: "イクストリーム", visible: true },
+                        { labelname: "ハード", visible: true },
+                        { labelname: "ファンブル", visible: true },
+                        { labelname: "初期値成功", visible: true },
+                        { labelname: "通常成功", visible: false },
+                        { labelname: "通常失敗", visible: false }
+                    ]
                 }
                 fetch(this.dicePath)
                     .then(response => {
@@ -718,8 +727,10 @@
             checkTimesDice(cont, tabName, charName) {
                 var temp_list = [];
                 var skill = "";
+                var option = "";
+
                 // x回ダイスの正規表現(スキルあり)
-                const times_with_skill_g = /x\d+( |　)(CCB|CC)[\(\-\+1-9\)]*&lt;=(\d+[crhe]*) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(クリティカル|スペシャル|成功|失敗)/;
+                const times_with_skill_g = /x\d+( |　)(CCB|CC)[\(\-\+0-9\)]*&lt;=(\d+[crhe]*) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(クリティカル|スペシャル|成功|失敗)/;
                 // スキルがある場合
                 if (cont.match(times_with_skill_g)) {
                     skill = cont.match(times_with_skill_g)[4];
@@ -728,6 +739,10 @@
                 if (this.system === "CoC6") {
                     var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/g);
                 } else {
+                    var option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
+                    if (option_match) {
+                        option = option_match[2];
+                    }
                     var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/g);
                 }
                 // 一致したそれぞれの部分に対して
@@ -735,7 +750,7 @@
                     var match = cont.match(/(x\d+.*)#/);
                     temp_list.push({ content: match[1], dice: {} });
                     for (let r of xdice) {
-                        dice = this.checkAllDice(r, tabName, charName, skill, judge);
+                        dice = this.checkAllDice(r, tabName, charName, skill, judge, option);
                         temp_list.push({ content: r, dice: dice });
                     }
                 } else {
@@ -751,14 +766,21 @@
              * @returns {list} ダイスのリスト
              */
             checkNormalDice(cont, tabName, charName) {
+
+                var option = "";
                 // スキルがある場合
                 if (cont.match(this.regex)) {
                     skill = cont.match(this.regex)[1];
                 }
                 // 判定値の正規表現
                 const judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
+
+                option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
+                if (this.system === "CoC7" && option_match) {
+                    option = option_match[2];
+                }
                 // 通常のダイスの解析
-                dice = this.checkAllDice(cont, tabName, charName, skill, judge);
+                dice = this.checkAllDice(cont, tabName, charName, skill, judge, option);
                 return [{ content: cont, dice: dice }];
             },
 
@@ -771,7 +793,7 @@
              * @param {string} judge 判定値
              * @returns {string} ダイスの色
              */
-            checkAllDice(cont, tabName, charName, skill, judge) {
+            checkAllDice(cont, tabName, charName, skill, judge, option) {
                 const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
                 // ステータス判定
                 let status = s_regex.test(cont);
@@ -789,6 +811,12 @@
                     dice = blueBackground;
                     if (judge && this.defaultDice.includes(judge[0])) {
                         label = "初期値成功";
+                    }else if (cont.match(/ハード成功/) || option === "h") {
+                        label = "ハード";
+                    } else if (cont.match(/イクストリーム成功/ || option === "e")) {
+                        label = "イクストリーム";
+                    } else if (option === "c") {
+                        label = "クリティカル";
                     } else {
                         label = "通常成功";
                     }
