@@ -489,7 +489,7 @@
                         <template v-for="con in tab.value">
                             <template v-if="character[con.charName].style==='character'">
                                 <div class="char" :style="'color:'+character[con.charName].color">
-                                    <b v-html="con.charName"></b>
+                                    <b v-html="con.charName" v-if="con.charName.trim()"></b>
                                     <p class="bbb" v-for="ccc in con.line">
                                         <template v-for="c in ccc">
                                             <span v-if="Object.keys(c.dice).length" :style="c.dice"
@@ -612,7 +612,20 @@
                 }
             },
             readDefaultDice() {
-                if (this.system === "CoC7") {
+                if (this.system === "CoC6") {
+                    this.dicePath = "./defaultDice6th.json"
+                    this.regex = /\s*【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+                    this.regex_d100 = /.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+                    this.times_regex_g = /x\d+( |　)(CCB|CC|RESB|RES)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(クリティカル|スペシャル|成功|失敗)/g;
+                    this.labels = [
+                        { labelname: "クリティカル", visible: true },
+                        { labelname: "スペシャル", visible: true },
+                        { labelname: "ファンブル", visible: true },
+                        { labelname: "初期値成功", visible: true },
+                        { labelname: "通常成功", visible: false },
+                        { labelname: "通常失敗", visible: false }
+                    ]
+                } else if (this.system === "CoC7") {
                     this.dicePath = "./defaultDice7th.json"
                     this.regex = /\s*【(.*)】.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
                     this.regex_d100 = /.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
