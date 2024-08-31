@@ -14,60 +14,6 @@
     <script type="text/javascript" src="./yokogaki.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
-        //配列をn個ずつに分割するメソッド
-        Array.prototype.chunk = function (n) {
-            len = Math.round(this.length / n, 10)
-            ret = []
-            for (var i = 0; i < len; i++) {
-                ret.push(this.slice(i * n, i * n + n))
-            }
-            return ret;
-        }
-        //おみくじとx回ダイスへの対応用メソッド
-        function readRegex(str) {
-            // 正規表現の設定
-            // x回ダイスの正規表現
-            const times_regex_g = /x\d+( |　)(CCB|CC|RESB)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-            // x回ダイスの正規表現(スキルあり)
-            const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
-            // おみくじの正規表現
-            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
-            // x回ダイスの正規表現と一致した場合の処理
-            if (str.match(times_regex_g)) {
-                // x回ダイスの正規表現と一致したすべての部分を取得
-                res = str.match(times_regex_g)
-                // 一致したそれぞれの部分に対して
-                for (let r of res) {
-                    // スキルがある場合
-                    if (times_with_skill_g.test(r)) {
-                        dice = r.match(times_with_skill_g)
-                        CCorCCB = dice[2]
-                        value = dice[3]
-                        skill = dice[4]
-                        // スキルがある場合の出力形式に変換
-                        r_new = r.split("\n(1D100").join(`<br>${CCorCCB}&lt;=${value} 【${skill}】 (1D100`).split("\n").join('<br>').replaceAll('<br><br>', '<br>')
-                    } else {
-                        // スキルがない場合の出力形式に変換
-                        r_new = r.split("\n").join('<br>').replaceAll('<br><br>', '<br>')
-                    }
-                    // 変換した部分を元の文字列に反映
-                    str = str.replace(r, r_new)
-                }
-            }
-            // おみくじの正規表現と一致した場合の処理
-            if (str.match(omikuji_regex_g)) {
-                // おみくじの正規表現と一致したすべての部分を取得
-                res = str.match(omikuji_regex_g)
-                // 一致したそれぞれの部分に対して
-                for (let r of res) {
-                    // おみくじの出力形式に変換
-                    r_new = r.split("\n").join('<br>')
-                    str = str.replace(r, r_new)
-                }
-            }
-            // 変換した文字列を返す
-            return str
-        }
         /**
          * ログの整形を行う
          * @param {string} logFileName ログファイル名
@@ -302,6 +248,10 @@
     <div class="box5">
         <div id="makeLog">
             整形したいログを選択してください．
+            <input type="radio" id="CoC6" name="system" value="CoC6" checked="checked" v-model="system">
+            <label for="CoC6">6版</label>
+            <input type="radio" id="CoC7" name="system" value="CoC7" v-model="system">
+            <label for="CoC7">7版</label>
             <br><br>
             <input type="file" accept="text/html" id="inputFile" @change="readLogFile">
             <br><br><br>
@@ -388,8 +338,6 @@
 
             </details>
             <br>
-            <!-- グラフ作成ボタン -->
-            <!-- <button type="button" @click="createGraph">グラフ作成</button> -->
             <details>
                 <summary>表示形式サンプル</summary>
                 <div class="growth_box">
@@ -427,7 +375,7 @@
 
             <canvas id="diceGraph"></canvas>
 
-            <br><br>
+            <br>
             <table width=400px>
                 <tbody>
                     <tr>
@@ -519,13 +467,13 @@
                 <div class="viewCheck">
                     <span v-for="(tab, name) in tablist">
                         <template v-if="tab.visible && name!=='メイン' && name!=='情報'">
-                            <div>
+                            <span>
                                 <input type="checkbox" :id="name" checked="checked"
                                     :onchange="'c_disp(this, \''+name+' tab\')'" :style="{'accent-color': tab.color}" />
                                 <label :for="name">
                                     <span :id="name+'_label'" v-html="name"></span>
                                 </label>
-                            </div>
+                            </span>
                         </template>
                     </span>
                 </div>
@@ -582,21 +530,23 @@
     const DEFAULT_COLOR = "#ffffff";
     const BACK_COLOR = "#ffffff";
     const FRAME_COLOR = "#6b8e23";
-    const DEFAULT_DICE_PATH = "./defaultDice6th.json"
-
     const blueBackground = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' };
     const redBackground = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' };
 
-    const regex = / 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
-    const regex_d100 = /.* \(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
 
     var makeLog = new Vue({
 
         el: "#makeLog",
         data: {
+            regex: /\s*【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/,
+            regex_d100: /.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/,
+            dicePath: "./defaultDice6th.json",
+            times_regex_g: /x\d+( |　)(CCB|CC|RESB|RES)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(クリティカル|スペシャル|成功|失敗)/g,
             isLoading: false,
             logFileName: "log",
             title: "ログ",
+            system: "CoC6",
+            myChart: null,
             nameColor: DEFAULT_COLOR,
             frameColor: FRAME_COLOR,
             backColor: BACK_COLOR,
@@ -614,7 +564,7 @@
                 { labelname: "ファンブル", visible: true },
                 { labelname: "初期値成功", visible: true },
                 { labelname: "通常成功", visible: false },
-                { labelname: "失敗", visible: false }
+                { labelname: "通常失敗", visible: false }
             ],
             copyText: "",
             datasets: [],
@@ -631,6 +581,10 @@
                 this.component = []
                 this.readDefaultDice()
                 this.datasets = []
+                // グラフの初期化   
+                if (this.myChart) {
+                    this.myChart.destroy()
+                }
             },
             /**
             * テキストコピー
@@ -658,20 +612,26 @@
                 }
             },
             readDefaultDice() {
-                fetch(DEFAULT_DICE_PATH)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    this.defaultDice = data
-                    console.log('ダイスの初期値読み込み完了');
-                })
-                .catch(error => {
-                    console.error('There has been a problem with your fetch operation:', error);
-                });
+                if (this.system === "CoC7") {
+                    this.dicePath = "./defaultDice7th.json"
+                    this.regex = /\s*【(.*)】.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
+                    this.regex_d100 = /.*\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+\] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/;
+                    this.times_regex_g = /x\d+( |　)(CC|RES|CBR)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(クリティカル|スペシャル|成功|失敗)/g;
+                }
+                fetch(this.dicePath)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('読み込みエラー');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.defaultDice = data
+                        console.log('ダイスの初期値読み込み完了');
+                    })
+                    .catch(error => {
+                        console.error('読み込みエラー:', error);
+                    });
             },
             /**
             * ログファイルの解析
@@ -679,13 +639,12 @@
             * @param {string} charName キャラクタ名
             * @param {string} content ログ内容
             */
-            analizeDice(tabName, charName, content) {
+            analyzeLogFile(tabName, charName, content) {
                 if (content.trim() !== '') {
                     // 改行で分割
                     let contents = content.split("<br>");
-                    let temp_cont = [];
+                    var temp_cont = [];
                     let dice = {};
-
                     // 各行の解析
                     for (let cont of contents) {
                         // 空行の場合は値を追加して次の行へ
@@ -695,13 +654,15 @@
                             temp_cont = [];
                             continue;
                             // ダイス行の場合はダイスの解析
-                        } else if (regex_d100.test(cont)) {
-                            dice = this.checkDice(cont, tabName, charName);
+                        } else {
+                            temp_list = this.checkDice(cont, tabName, charName);
+                            for (let temp of temp_list) {
+                                temp_cont.push(temp);
+                            }
                         }
-                        temp_cont.push({ content: cont, dice: dice });
+                        // 値を追加
+                        this.addValue(tabName, charName, temp_cont);
                     }
-                    // 値を追加
-                    this.addValue(tabName, charName, temp_cont);
                 }
             },
             /**
@@ -736,43 +697,109 @@
              * @param {string} charName キャラクタ名
              */
             checkDice(cont, tabName, charName) {
+                // x回ダイスの正規表現
+                if (cont.match(this.times_regex_g)) {
+                    // x回ダイスの正規表現
+                    return this.checkTimesDice(cont, tabName, charName);
+                } else if (cont.match(this.regex_d100)) {
+                    // 通常ダイスの正規表現
+                    return this.checkNormalDice(cont, tabName, charName);
+                } else {
+                    return [{ content: cont, dice: {} }];
+                }
+            },
+            /**
+             * x回ダイスの解析
+             * @param {string} cont ログ内容
+             * @param {string} tabName タブ名
+             * @param {string} charName キャラクタ名
+             * @returns {list} ダイスのリスト
+             */
+            checkTimesDice(cont, tabName, charName) {
+                var temp_list = [];
+                var skill = "";
+                // x回ダイスの正規表現(スキルあり)
+                const times_with_skill_g = /x\d+( |　)(CCB|CC)[\(\-\+1-9\)]*&lt;=(\d+[crhe]*) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(クリティカル|スペシャル|成功|失敗)/;
+                // スキルがある場合
+                if (cont.match(times_with_skill_g)) {
+                    skill = cont.match(times_with_skill_g)[4];
+                }
+                var judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
+                if (this.system === "CoC6") {
+                    var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/g);
+                } else {
+                    var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/g);
+                }
+                // 一致したそれぞれの部分に対して
+                if (xdice) {
+                    var match = cont.match(/(x\d+.*)#/);
+                    temp_list.push({ content: match[1], dice: {} });
+                    for (let r of xdice) {
+                        dice = this.checkAllDice(r, tabName, charName, skill, judge);
+                        temp_list.push({ content: r, dice: dice });
+                    }
+                } else {
+                    temp_list.push({ content: cont, dice: {} });
+                }
+                return temp_list
+            },
+            /**
+             * 通常ダイスの解析
+             * @param {string} cont ログ内容
+             * @param {string} tabName タブ名
+             * @param {string} charName キャラクタ名
+             * @returns {list} ダイスのリスト
+             */
+            checkNormalDice(cont, tabName, charName) {
+                // スキルがある場合
+                if (cont.match(this.regex)) {
+                    skill = cont.match(this.regex)[1];
+                }
+                // 判定値の正規表現
+                const judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
+                // 通常のダイスの解析
+                dice = this.checkAllDice(cont, tabName, charName, skill, judge);
+                return [{ content: cont, dice: dice }];
+            },
+
+            /**
+             * ダイスの解析
+             * @param {string} cont ログ内容
+             * @param {string} tabName タブ名
+             * @param {string} charName キャラクタ名
+             * @param {string} skill スキル名
+             * @param {string} judge 判定値
+             * @returns {string} ダイスの色
+             */
+            checkAllDice(cont, tabName, charName, skill, judge) {
+                const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
+                // ステータス判定
+                let status = s_regex.test(cont);
                 // ダイスの解析
-                label = "";
+                let label = "通常失敗";
                 dice = redBackground;
-                let res = cont.match(regex_d100)[1];
-                if (cont.match(/決定的成功|スペシャル/)) {
+                let res = cont.match(this.regex_d100)[1];
+                if (cont.match(/クリティカル|決定的成功|スペシャル/)) {
                     dice = blueBackground;
-                    label = cont.match(/決定的成功/) ? "クリティカル" : "スペシャル";
-                } else if (cont.match(/致命的失敗/)) {
+                    label = cont.match(/クリティカル|決定的成功/) ? "クリティカル" : "スペシャル";
+                } else if (cont.match(/致命的失敗|ファンブル/)) {
                     dice = redBackground;
                     label = "ファンブル";
                 } else if (cont.match(/成功/)) {
                     dice = blueBackground;
-                    const judge = cont.match(/&lt;=\d+ 【.*】/);
                     if (judge && this.defaultDice.includes(judge[0])) {
                         label = "初期値成功";
                     } else {
                         label = "通常成功";
                     }
-                } else if (cont.match(/失敗/)) {
-                    dice = redBackground;
-                    label = "失敗";
                 }
-                // ラベルがある場合
-                if (label !== "") {
-                    const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
-                    // ステータス判定
-                    let status = s_regex.test(cont);
-                    // 技能名の取得
-                    let skillMatch = cont.match(regex);
-                    let skill = skillMatch ? skillMatch[1] : "";
-                    // キャラクタがない場合は追加
-                    if (!this.result[charName]) { this.result[charName] = {}; }
-                    // ラベルがない場合は追加
-                    if (!this.result[charName][label]) { this.result[charName][label] = []; }
-                    // ダイスの追加
-                    this.result[charName][label].push({ tabName: tabName, ginou: skill, value: res, status: status });
-                }
+                // キャラクタがない場合は追加
+                if (!this.result[charName]) { this.result[charName] = {}; }
+                // ラベルがない場合は追加
+                if (!this.result[charName][label]) { this.result[charName][label] = []; }
+                // ダイスの追加
+                this.result[charName][label].push({ tabName: tabName, ginou: skill, value: res, status: status });
+                // ダイスの返却
                 return dice;
             },
             /**
@@ -795,7 +822,7 @@
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
                     var content = reader.result
-                    if (this.readLog(readRegex(content))) {
+                    if (this.readLog(content)) {
                         alert("ファイル読み込み完了")
                         // グラフを作成
                         this.createGraph()
@@ -818,7 +845,7 @@
                 var charName, style, color, tabName = ""
                 list = ["system"]
                 ary = []
-                const regex = /<p style="color:(#[0-9a-z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S]*?)\n\s*<\/span>\s+<\/p>/g
+                const regex = /<p style="color:(#[0-9a-z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S\n]*?)\s*<\/span>\s+<\/p>/g
 
                 // マッチング実行
                 const matches = content.matchAll(regex);
@@ -850,7 +877,7 @@
                             this.character[charName] = { color: charColor, style: "item" }
                         }
                         // ダイスの解析
-                        this.analizeDice(tabName, charName, content)
+                        this.analyzeLogFile(tabName, charName, content)
                     }
                     // キャラクタリストのソート
                     // キャラクタ名でstyleがcharacterのものを先頭に移動したのち、それぞれのキャラクタ名でソート
@@ -903,7 +930,7 @@
                 // グラフの描画
                 // Y軸は「回数」、目盛りは0から、間隔は1
                 // X軸は「出目」、目盛りは1から100、間隔は5
-                new Chart(ctx, {
+                this.myChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
@@ -944,8 +971,6 @@
                 for (labels in this.result[char]) {
                     for (dices in this.result[char][labels]) {
                         let dice = this.result[char][labels][dices];
-                        // タブが表示されている場合のみ集計
-                        // if(this.tablist[dice.tabName] && this.tablist[dice.tabName].diceVisible){
                         diceInfo[Math.floor(dice.value / 5)]++;
                         // }
                     }
