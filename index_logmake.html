@@ -627,20 +627,20 @@
                         { labelname: "通常失敗", visible: false }
                     ]
                 }
-                // fetch(this.dicePath)
-                //     .then(response => {
-                //         if (!response.ok) {
-                //             throw new Error('読み込みエラー');
-                //         }
-                //         return response.json();
-                //     })
-                //     .then(data => {
-                //         this.defaultDice = data
-                //         console.log('ダイスの初期値読み込み完了');
-                //     })
-                //     .catch(error => {
-                //         console.error('読み込みエラー:', error);
-                //     });
+                fetch(this.dicePath)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('読み込みエラー');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        this.defaultDice = data
+                        console.log('ダイスの初期値読み込み完了');
+                    })
+                    .catch(error => {
+                        console.error('読み込みエラー:', error);
+                    });
             },
             /**
             * ログファイルの解析
