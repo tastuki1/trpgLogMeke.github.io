@@ -95,11 +95,11 @@ function returnTemplate(logFileName, title, nameColor, frameColor, backColor, vi
   .bbb {
     display: block;
     content: "";
-    margin: 0rem 0.4rem;
+    margin: 0rem 0.3rem;
   }
   /* PCの記載 */
   .char {
-      margin: 1rem 1rem 1rem 0.5rem;
+      margin: 1.5rem 1rem 1.5rem 0.5rem;
   }
   .KP {
       margin-left: .5rem;

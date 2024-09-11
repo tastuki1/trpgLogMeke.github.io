@@ -126,7 +126,7 @@
 
         .box5 p {
             margin: 0;
-            padding: .5rem;
+            padding: .5rem .5rem .2rem;
             text-align: left;
         }
 
@@ -206,12 +206,12 @@
         .bbb {
             display: block;
             content: "";
-            margin: 0rem 0.6rem;
+            margin: 0rem;
         }
 
         /* PCの記載 */
         .char {
-            margin: 1rem 1rem 1rem 0.5rem;
+            margin: 1.5rem 1rem 2rem 0.5rem;
         }
 
         .KP {
@@ -424,12 +424,13 @@
                     <template v-for="(tab, name) in tablist">
                         <tr>
                             <td>
-                                <input type="checkbox" name="tablist[][visible]" v-model="tab.visible" />
+                                <input type="checkbox" :name="name+'_visible'" :checked="tab.visible"
+                                    @click="changeChecked" />
                             </td>
                             <td v-html="name"></td>
                             <td v-if="name!=='メイン' && name!=='情報'">
-                                <input type="color" name="tablist[][color]" :value="tab.color"
-                                    @input="tab.color = $event.target.value" @change="changeColor" />
+                                <input type="color" :name="name+'_color'" :value="tab.color"
+                                    @change="changeColor" />
                             </td>
                         </tr>
                     </template>
@@ -463,14 +464,14 @@
             </table>
             <br><br>
 
-            <div id="viewCheckText" style="display:none;">
+            <div id="viewCheckText" style="display: none;">
                 <div class="viewCheck">
                     <span v-for="(tab, name) in tablist">
-                        <template v-if="tab.visible && name!=='メイン' && name!=='情報'">
+                        <template v-if="tab.visible">
                             <span>
-                                <input type="checkbox" :id="name" checked="checked"
-                                    :onchange="'c_disp(this, \''+name+' tab\')'" :style="{'accent-color': tab.color}" />
-                                <label :for="name">
+                                <label :for="name" v-if="name!=='メイン' && name!=='情報'">
+                                    <input type="checkbox" :id="name" checked="checked"
+                                        :onchange="'c_disp(this, \''+name+' tab\')'" :style="{'accent-color': tab.color}" />
                                     <span :id="name+'_label'" v-html="name"></span>
                                 </label>
                             </span>
@@ -481,7 +482,7 @@
             <button onclick="logFileData()">ダウンロード</button>
 
             <!-- ログ表示エリア -->
-            <div id="contentText" style="display:none;">
+            <div id="contentText" style="display: none;">
                 <template v-for="tab in component">
                     <div v-if="tablist[tab.tabName].visible"
                         :style="'border-left: 3px solid ' + tablist[tab.tabName].color"
@@ -494,7 +495,8 @@
                                         <template v-for="c in ccc">
                                             <span v-if="Object.keys(c.dice).length" :style="c.dice"
                                                 v-html="c.content"></span>
-                                            <span v-else v-html="c.content"></span><br>
+                                            <span v-else v-html="c.content"></span>
+                                            <br>
                                         </template>
                                     </p>
                                 </div>
@@ -575,15 +577,19 @@
              * ログ内容のリセット
              */
             reset() {
-                this.result = []
-                this.tablist = { "メイン": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true }, "情報": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true } }
-                this.character = {}
-                this.component = []
-                this.readDefaultDice()
-                this.datasets = []
-                // グラフの初期化   
-                if (this.myChart) {
-                    this.myChart.destroy()
+                try {
+                    this.result = []
+                    this.tablist = { "メイン": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true }, "情報": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true } }
+                    this.character = {}
+                    this.component = []
+                    this.readDefaultDice()
+                    this.datasets = []
+                    // グラフの初期化   
+                    if (this.myChart) {
+                        this.myChart.destroy()
+                    }
+                } catch (e) {
+                    alert("ログ内容のリセットでエラーが発生しました．");
                 }
             },
             /**
@@ -603,13 +609,20 @@
                     })
             },
             changeColor() {
-                for (let [key, value] of Object.entries(this.tablist)) {
-
-                    if (key !== "メイン" && key !== "情報") {
-                        // チェックボックスの色を変更
-                        document.getElementById(key).style = `accent-color: ${value.color}`;
-                    }
-                }
+                const name = event.target.name.split('_')[0]
+                // チェックボックスの色を変更
+                this.tablist[name].color = event.target.value
+                this.$nextTick(() => {
+                    this.$forceUpdate()
+                })
+            },
+            changeChecked(event) {
+                const name = event.target.name.split('_')[0]
+                // チェックボックスの表示を変更
+                this.tablist[name].visible = event.target.checked
+                this.$nextTick(() => {
+                    this.$forceUpdate()
+                })
             },
             readDefaultDice() {
                 if (this.system === "CoC6") {
@@ -643,7 +656,7 @@
                 fetch(this.dicePath)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('読み込みエラー');
+                            throw new Error('ダイス情報読み込みエラー');
                         }
                         return response.json();
                     })
@@ -652,7 +665,7 @@
                         console.log('ダイスの初期値読み込み完了');
                     })
                     .catch(error => {
-                        console.error('読み込みエラー:', error);
+                        console.error('ダイス情報読み込みエラー:', error);
                     });
             },
             /**
@@ -662,30 +675,35 @@
             * @param {string} content ログ内容
             */
             analyzeLogFile(tabName, charName, content) {
-                if (content.trim() !== '') {
-                    // 改行で分割
-                    let contents = content.split("<br>");
-                    var temp_cont = [];
-                    let dice = {};
-                    // 各行の解析
-                    for (let cont of contents) {
-                        // 空行の場合は値を追加して次の行へ
-                        if (cont.trim() === '') {
-                            this.addValue(tabName, charName, temp_cont);
-                            // 初期化
-                            temp_cont = [];
-                            continue;
-                            // ダイス行の場合はダイスの解析
-                        } else {
-                            temp_list = this.checkDice(cont, tabName, charName);
-                            for (let temp of temp_list) {
-                                temp_cont.push(temp);
+                try {
+                    // 空行でない場合
+                    if (content.trim() !== '') {
+                        // 改行で分割
+                        let contents = content.split("<br>");
+                        var temp_cont = [];
+                        let dice = {};
+                        // 各行の解析
+                        for (let cont of contents) {
+                            // 空行の場合は値を追加して次の行へ
+                            if (cont.trim() === '') {
+                                this.addValue(tabName, charName, temp_cont);
+                                // 初期化
+                                temp_cont = [];
+                                continue;
+                                // ダイス行の場合はダイスの解析
+                            } else {
+                                temp_list = this.checkDice(cont, tabName, charName);
+                                for (let temp of temp_list) {
+                                    temp_cont.push(temp);
+                                }
                             }
                         }
                         // 値を追加
                         this.addValue(tabName, charName, temp_cont);
                         temp_cont = [];
                     }
+                } catch (e) {
+                    alert("ログ解析でエラーが発生しました．");
                 }
             },
             /**
@@ -695,23 +713,29 @@
              * @param {string} line 行
              */
             addValue(tabName, charName, line) {
-                const num = this.component.length - 1;
-                // タブ名が同じ場合
-                if (num >= 0 && this.component[num].tabName === tabName) {
-                    const lastComponent = this.component[num];
-                    const lineNum = lastComponent.value.length - 1;
-                    const lastValue = lineNum >= 0 ? lastComponent.value[lineNum] : null;
-                    // キャラクタ名が同じ場合
-                    if (lastValue && lastValue.charName === charName) {
-                        this.component[num].value[lineNum].line.push(line);
-                        // キャラクタ名が異なる場合
+                try {
+                    // 最後のコンポーネントを取得
+                    const num = this.component.length - 1;
+                    // タブ名が同じ場合
+                    if (num >= 0 && this.component[num].tabName === tabName) {
+                        const lastComponent = this.component[num];
+                        const lineNum = lastComponent.value.length - 1;
+                        const lastValue = lineNum >= 0 ? lastComponent.value[lineNum] : null;
+                        // キャラクタ名が同じ場合
+                        if (lastValue && lastValue.charName === charName) {
+                            this.component[num].value[lineNum].line.push(line);
+                            // キャラクタ名が異なる場合
+                        } else {
+                            this.component[num].value.push({ charName: charName, line: [line] });
+                        }
+                        // タブ名が異なる場合
                     } else {
-                        this.component[num].value.push({ charName: charName, line: [line] });
+                        this.component.push({ tabName: tabName, value: [{ charName: charName, line: [line] }] });
                     }
-                    // タブ名が異なる場合
-                } else {
-                    this.component.push({ tabName: tabName, value: [{ charName: charName, line: [line] }] });
+                } catch (e) {
+                    alert("値の追加でエラーが発生しました．");
                 }
+
             },
             /**
              * ダイスの解析
@@ -720,14 +744,19 @@
              * @param {string} charName キャラクタ名
              */
             checkDice(cont, tabName, charName) {
-                // x回ダイスの正規表現
-                if (cont.match(this.times_regex_g)) {
+                try {
                     // x回ダイスの正規表現
-                    return this.checkTimesDice(cont, tabName, charName);
-                } else if (cont.match(this.regex_d100)) {
-                    // 通常ダイスの正規表現
-                    return this.checkNormalDice(cont, tabName, charName);
-                } else {
+                    if (cont.match(this.times_regex_g)) {
+                        // x回ダイスの正規表現
+                        return this.checkTimesDice(cont, tabName, charName);
+                    } else if (cont.match(this.regex_d100)) {
+                        // 通常ダイスの正規表現
+                        return this.checkNormalDice(cont, tabName, charName);
+                    } else {
+                        return [{ content: cont, dice: {} }];
+                    }
+                } catch (e) {
+                    alert("ダイス解析でエラーが発生しました．");
                     return [{ content: cont, dice: {} }];
                 }
             },
@@ -743,34 +772,39 @@
                 var skill = "";
                 var option = "";
 
-                // x回ダイスの正規表現(スキルあり)
-                const times_with_skill_g = /x\d+( |　)(CCB|CC)[\(\-\+0-9\)]*&lt;=(\d+[crhe]*) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(クリティカル|スペシャル|成功|失敗)/;
-                // スキルがある場合
-                if (cont.match(times_with_skill_g)) {
-                    skill = cont.match(times_with_skill_g)[4];
-                }
-                var judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
-                if (this.system === "CoC6") {
-                    var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/g);
-                } else {
-                    var option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
-                    if (option_match) {
-                        option = option_match[2];
+                try {
+                    // x回ダイスの正規表現(スキルあり)
+                    const times_with_skill_g = /x\d+( |　)(CCB|CC)[\(\-\+0-9\)]*&lt;=(\d+[crhe]*) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(クリティカル|スペシャル|成功|失敗)/;
+                    // スキルがある場合
+                    if (cont.match(times_with_skill_g)) {
+                        skill = cont.match(times_with_skill_g)[4];
                     }
-                    var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/g);
-                }
-                // 一致したそれぞれの部分に対して
-                if (xdice) {
-                    var match = cont.match(/(x\d+.*)#/);
-                    temp_list.push({ content: match[1], dice: {} });
-                    for (let r of xdice) {
-                        dice = this.checkAllDice(r, tabName, charName, skill, judge, option);
-                        temp_list.push({ content: r, dice: dice });
+                    var judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
+                    if (this.system === "CoC6") {
+                        var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/g);
+                    } else {
+                        var option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
+                        if (option_match) {
+                            option = option_match[2];
+                        }
+                        var xdice = cont.match(/#\d+\n\(1D100&lt;=\d+\) ボーナス・ペナルティダイス\[\-*\d+] ＞ [\d\,\s]+ ＞ (\d+) ＞ (.*)/g);
                     }
-                } else {
-                    temp_list.push({ content: cont, dice: {} });
+                    // 一致したそれぞれの部分に対して
+                    if (xdice) {
+                        var match = cont.match(/(x\d+.*)#/);
+                        temp_list.push({ content: match[1], dice: {} });
+                        for (let r of xdice) {
+                            dice = this.checkAllDice(r, tabName, charName, skill, judge, option);
+                            temp_list.push({ content: r, dice: dice });
+                        }
+                    } else {
+                        temp_list.push({ content: cont, dice: {} });
+                    }
+                    return temp_list
+                } catch (e) {
+                    alert("x回ダイスの解析でエラーが発生しました．");
+                    return [{ content: cont, dice: {} }];
                 }
-                return temp_list
             },
             /**
              * 通常ダイスの解析
@@ -780,22 +814,28 @@
              * @returns {list} ダイスのリスト
              */
             checkNormalDice(cont, tabName, charName) {
+                try {
+                    var dice = {};
+                    var option = "";
+                    // スキルがある場合
+                    if (cont.match(this.regex)) {
+                        skill = cont.match(this.regex)[1];
+                    }
+                    
+                    // 判定値の正規表現
+                    const judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
 
-                var option = "";
-                // スキルがある場合
-                if (cont.match(this.regex)) {
-                    skill = cont.match(this.regex)[1];
+                    option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
+                    if (this.system === "CoC7" && option_match) {
+                        option = option_match[2];
+                    }
+                    // 通常のダイスの解析
+                    dice = this.checkAllDice(cont, tabName, charName, skill, judge, option);
+                    return [{ content: cont, dice: dice }];
+                } catch (e) {
+                    alert("通常ダイスの解析でエラーが発生しました．");
+                    return [{ content: cont, dice: {} }];
                 }
-                // 判定値の正規表現
-                const judge = cont.match(/&lt;=\d+[crhe]* 【.*】/);
-
-                option_match = cont.match(/(CC|RES|CBR)[\(\-\+0-9\)]*&lt;=\d+([crhe])/);
-                if (this.system === "CoC7" && option_match) {
-                    option = option_match[2];
-                }
-                // 通常のダイスの解析
-                dice = this.checkAllDice(cont, tabName, charName, skill, judge, option);
-                return [{ content: cont, dice: dice }];
             },
 
             /**
@@ -808,41 +848,47 @@
              * @returns {string} ダイスの色
              */
             checkAllDice(cont, tabName, charName, skill, judge, option) {
-                const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
-                // ステータス判定
-                let status = s_regex.test(cont);
-                // ダイスの解析
-                let label = "通常失敗";
-                dice = redBackground;
-                let res = cont.match(this.regex_d100)[1];
-                if (cont.match(/クリティカル|決定的成功|スペシャル/)) {
-                    dice = blueBackground;
-                    label = cont.match(/クリティカル|決定的成功/) ? "クリティカル" : "スペシャル";
-                } else if (cont.match(/致命的失敗|ファンブル/)) {
+                try {
+                    // ステータスの正規表現
+                    const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
+                    // ステータス判定
+                    let status = s_regex.test(cont);
+                    // ダイスの解析
+                    let label = "通常失敗";
                     dice = redBackground;
-                    label = "ファンブル";
-                } else if (cont.match(/成功/)) {
-                    dice = blueBackground;
-                    if (judge && this.defaultDice.includes(judge[0])) {
-                        label = "初期値成功";
-                    }else if (cont.match(/ハード成功/) || option === "h") {
-                        label = "ハード";
-                    } else if (cont.match(/イクストリーム成功/ || option === "e")) {
-                        label = "イクストリーム";
-                    } else if (option === "c") {
-                        label = "クリティカル";
-                    } else {
-                        label = "通常成功";
+                    let res = cont.match(this.regex_d100)[1];
+                    if (cont.match(/クリティカル|決定的成功|スペシャル/)) {
+                        dice = blueBackground;
+                        label = cont.match(/クリティカル|決定的成功/) ? "クリティカル" : "スペシャル";
+                    } else if (cont.match(/致命的失敗|ファンブル/)) {
+                        dice = redBackground;
+                        label = "ファンブル";
+                    } else if (cont.match(/成功/)) {
+                        dice = blueBackground;
+                        if (judge && this.defaultDice.includes(judge[0])) {
+                            label = "初期値成功";
+                        }else if (cont.match(/ハード成功/) || option === "h") {
+                            label = "ハード";
+                        } else if (cont.match(/イクストリーム成功/ || option === "e")) {
+                            label = "イクストリーム";
+                        } else if (option === "c") {
+                            label = "クリティカル";
+                        } else {
+                            label = "通常成功";
+                        }
                     }
+                    // キャラクタがない場合は追加
+                    if (!this.result[charName]) { this.result[charName] = {}; }
+                    // ラベルがない場合は追加
+                    if (!this.result[charName][label]) { this.result[charName][label] = []; }
+                    // ダイスの追加
+                    this.result[charName][label].push({ tabName: tabName, ginou: skill, value: res, status: status });
+                    // ダイスの返却
+                    return dice;
+                } catch (e) {
+                    alert("ダイス判定の解析でエラーが発生しました．");
+                    return redBackground
                 }
-                // キャラクタがない場合は追加
-                if (!this.result[charName]) { this.result[charName] = {}; }
-                // ラベルがない場合は追加
-                if (!this.result[charName][label]) { this.result[charName][label] = []; }
-                // ダイスの追加
-                this.result[charName][label].push({ tabName: tabName, ginou: skill, value: res, status: status });
-                // ダイスの返却
-                return dice;
             },
             /**
              * ログファイルの読み込み
@@ -869,7 +915,7 @@
                         // グラフを作成
                         this.createGraph()
                     } else {
-                        alert("ファイル情報取得エラー")
+                        alert("ファイル読み込みエラー")
                     }
                 }
                 // ファイル読み込みエラー時の処理
@@ -889,10 +935,10 @@
                 ary = []
                 const regex = /<p style="color:(#[0-9a-z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S\n]*?)\s*<\/span>\s+<\/p>/g
 
-                // マッチング実行
-                const matches = content.matchAll(regex);
-
                 try {
+                    // マッチング実行
+                    const matches = content.matchAll(regex);
+
                     // 各ブロックごとに処理
                     for (const match of matches) {
 
@@ -933,6 +979,7 @@
 
                     return true
                 } catch {
+                    alert("ログファイルの解析でエラーが発生しました．")
                     return false
                 }
             },
@@ -950,74 +997,87 @@
                 }
             },
             createGraph() {
-                const ctx = document.getElementById('diceGraph').getContext('2d');
+                try{
+                    const ctx = document.getElementById('diceGraph').getContext('2d');
 
-                // X軸のラベルを設定
-                const labels = Array.from({ length: 20 }, (_, i) => (i * 5 + 1).toString() + "-" + ((i + 1) * 5).toString()); // Update labels for 1 to 100 dice rolls
-                var color = DEFAULT_COLOR
-                for (char in this.result) {
-                    if (char === "chunk") continue;
-                    if (!this.character[char]) {
-                        color = this.getRandomColor();
-                    } else {
-                        color = this.character[char].color;
-                    }
-                    this.datasets.push({
-                        label: char,
-                        data: this.extractDiceInfo(char),
-                        backgroundColor: [color],
-                    });
-                };
+                    // X軸のラベルを設定
+                    const labels = Array.from({ length: 20 }, (_, i) => (i * 5 + 1).toString() + "-" + ((i + 1) * 5).toString()); // Update labels for 1 to 100 dice rolls
+                    var color = DEFAULT_COLOR
+                    for (char in this.result) {
+                        if (char === "chunk") continue;
+                        if (!this.character[char]) {
+                            color = this.getRandomColor();
+                        } else {
+                            color = this.character[char].color;
+                        }
+                        this.datasets.push({
+                            label: char,
+                            data: this.extractDiceInfo(char),
+                            backgroundColor: [color],
+                        });
+                    };
 
-                // グラフの描画
-                // Y軸は「回数」、目盛りは0から、間隔は1
-                // X軸は「出目」、目盛りは1から100、間隔は5
-                this.myChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: this.datasets,
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                // 整数のみ表示
-                                ticks: {
-                                    stepSize: 1,
-                                    beginAtZero: true,
+                    // グラフの描画
+                    // Y軸は「回数」、目盛りは0から、間隔は1
+                    // X軸は「出目」、目盛りは1から100、間隔は5
+                    this.myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: this.datasets,
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    // 整数のみ表示
+                                    ticks: {
+                                        stepSize: 1,
+                                        beginAtZero: true,
+                                    },
+                                    // 軸ラベル
+                                    title: {
+                                        display: true,
+                                        text: '回数'
+                                    }
                                 },
-                                // 軸ラベル
-                                title: {
-                                    display: true,
-                                    text: '回数'
-                                }
-                            },
-                            x: {
-                                beginAtZero: true,
-                                // 軸ラベル
-                                title: {
-                                    display: true,
-                                    text: '出目'
+                                x: {
+                                    beginAtZero: true,
+                                    // 軸ラベル
+                                    title: {
+                                        display: true,
+                                        text: '出目'
+                                    }
                                 }
                             }
-                        }
-                    },
-                })
-            },
-            extractDiceInfo(char) {
-
-                // 5刻みにダイスの出目を集計
-                let diceInfo = Array.from({ length: 20 }, () => 0);
-                // const diceInfo = Array.from({length: 100}, () => 0);
-                for (labels in this.result[char]) {
-                    for (dices in this.result[char][labels]) {
-                        let dice = this.result[char][labels][dices];
-                        diceInfo[Math.floor(dice.value / 5)]++;
-                        // }
-                    }
+                        },
+                    })
+                } catch (e) {
+                    alert("グラフの作成でエラーが発生しました．")
                 }
-                return diceInfo;
+            },
+            /**
+             * ダイスの情報を取得
+             * @param {string} char キャラクタ名
+             * @returns {list} ダイスの情報
+             */
+            extractDiceInfo(char) {
+                try {
+                    // 5刻みにダイスの出目を集計
+                    let diceInfo = Array.from({ length: 20 }, () => 0);
+                    // const diceInfo = Array.from({length: 100}, () => 0);
+                    for (labels in this.result[char]) {
+                        for (dices in this.result[char][labels]) {
+                            let dice = this.result[char][labels][dices];
+                            diceInfo[Math.floor(dice.value / 5)]++;
+                            // }
+                        }
+                    }
+                    return diceInfo;
+                } catch (e) {
+                    alert("ダイス情報の取得でエラーが発生しました．")
+                    return []
+                }
             },
             getRandomColor() {
                 const letters = '123456789AB';
