@@ -704,7 +704,8 @@
                         temp_cont = [];
                     }
                 } catch (e) {
-                    alert("ログ解析でエラーが発生しました．");
+                    alert(`ログ解析でエラーが発生しました．${e}`);
+                    this.error_list.push(`ログ解析でエラーが発生しました．${content}}`);
                 }
             },
             /**
