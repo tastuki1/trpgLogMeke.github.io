@@ -570,7 +570,8 @@
             ],
             copyText: "",
             datasets: [],
-            defaultDice: []
+            defaultDice: [],
+            error_list: []
         },
         methods: {
             /**
@@ -756,7 +757,7 @@
                         return [{ content: cont, dice: {} }];
                     }
                 } catch (e) {
-                    alert("ダイス解析でエラーが発生しました．");
+                    error_list.push("ダイス解析でエラーが発生しました．");
                     return [{ content: cont, dice: {} }];
                 }
             },
@@ -802,7 +803,7 @@
                     }
                     return temp_list
                 } catch (e) {
-                    alert("x回ダイスの解析でエラーが発生しました．");
+                    error_list.push(`x回ダイスの解析でエラーが発生しました．${cont}`);
                     return [{ content: cont, dice: {} }];
                 }
             },
@@ -833,7 +834,7 @@
                     dice = this.checkAllDice(cont, tabName, charName, skill, judge, option);
                     return [{ content: cont, dice: dice }];
                 } catch (e) {
-                    alert("通常ダイスの解析でエラーが発生しました．");
+                    error_list.push(`通常ダイスの解析でエラーが発生しました．${cont}`);
                     return [{ content: cont, dice: {} }];
                 }
             },
@@ -886,7 +887,7 @@
                     // ダイスの返却
                     return dice;
                 } catch (e) {
-                    alert("ダイス判定の解析でエラーが発生しました．");
+                    error_list.push(`ダイス判定の解析でエラーが発生しました．${cont}`);
                     return redBackground
                 }
             },
@@ -911,7 +912,11 @@
                 reader.onload = () => {
                     var content = reader.result
                     if (this.readLog(content)) {
-                        alert("ファイル読み込み完了")
+                        if (this.error_list.length > 0) {
+                            alert("ログファイルの解析でエラーが発生しました．\n（ログの出力は可能です）\n\n以下エラー内容:\n" + this.error_list.join("\n"));
+                        }else{
+                            alert("ファイル読み込み完了")
+                        }
                         // グラフを作成
                         this.createGraph()
                     } else {
