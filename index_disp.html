@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>ディスプレイ生成ツール</title>
+  <h1>画像作成</h1>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.min.js"></script> -->
+  <script type="text/javascript">
+    Array.prototype.chunk = function (n) {
+      len = Math.round(this.length / n, 10)
+      ret = []
+      for (var i = 0; i < len; i++) {
+        ret.push(this.slice(i * n, i * n + n))
+      }
+      return ret;
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+    @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      -webkit-text-size-adjust: 100%;
+      background-color: #6b8e23;
+      font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    }
+
+    h1 {
+      margin: 1rem 2rem 0;
+      color: #ffffff;
+      font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+    }
+    .canvas-wrapper canvas {
+        position: absolute;
+        right: 0;
+        top:0;
+        /* bottom: 0; */
+    }
+    /* .canvas-wrapper .status {
+      position: absolute;
+      padding-left: 600px;
+    } */
+    
+    h2 {
+      margin-bottom: .5rem;
+    }
+
+    h3 {
+      margin: .5rem;
+    }
+
+    .disp_check {
+      padding-left: .5rem;
+      border-collapse: separate;
+      border-spacing: 0 1rem;
+    }
+
+    .disp_check th {
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    .disp_check td {
+      display: inline-block;
+    }
+
+    .value {
+      width: 3rem;
+      white-space: nowrap;
+    }
+
+    .growth th {
+      white-space: nowrap;
+    }
+
+    .growth caption {
+      padding-left: .5rem;
+    }
+
+    .growth td {
+      padding-left: 1rem;
+    }
+
+    caption {
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .box5 {
+      padding: 1.5rem;
+      margin: 1rem;
+      height: 1500px;
+      border: double 5px #6b8e23;
+      background-color: #ffffff;
+    }
+
+    @media screen and (max-width: 480px) {
+      html {
+        font-size: 14px;
+      }
+
+      h1 {
+        font-size: 30px;
+        margin: .5rem 1rem 0;
+        color: #ffffff;
+        font-family: 'UD デジタル 教科書体 N-R', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+      }
+
+      .box5 {
+        margin: .5rem;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box5">
+    <div id="makeLog">
+     画像を選択してください．
+      <br><br>
+      <input type="file" accept="image/*" id="inputFile" @change="readPNG">
+      <br><br>
+      <div class="canvas-wrapper">
+        <canvas id="background" width="1200" height="600" style="background-color:black;"></canvas>
+        <canvas id="canvas1" width="1200" height="600"></canvas>
+        <canvas id="canvas2" width="1200" height="600"></canvas>
+        <canvas id="canvas3" width="1200" height="600"></canvas>
+        <canvas id="status" width="600" height="600"></canvas> 
+      </div>
+      <!-- <canvas id="board" width="900" height="600"></canvas> -->
+      <!-- {{ growth_check_PC }} -->
+    </div>
+        
+
+
+      
+      
+  </div>
+</body>
+
+<script>
+  var makeLog = new Vue({
+    el: "#makeLog",
+    data: {
+    },
+    methods: {
+      copy() {
+        const copyText = this.$el.querySelector('#growth_area').innerText
+        navigator.clipboard
+          .writeText(copyText)
+          .then(() => {
+            console.log('テキストコピー完了')
+            alert('テキストコピー完了')
+          })
+          .catch(e => {
+            console.error(e)
+          })
+      },
+      readPNG: function (e) {
+        const background = document.getElementById("background"); 
+        const back = background.getContext("2d");
+        const canvas1 = document.getElementById("canvas1");
+        const ctx1 = canvas1.getContext("2d");
+        ctx1.globalAlpha = 0.5;
+        const canvas2 = document.getElementById("canvas2");
+        const ctx2 = canvas2.getContext("2d");
+        const canvas3 = document.getElementById("canvas3");
+        const ctx3 = canvas3.getContext("2d");
+
+        var ctx4 = document.getElementById("status");
+        var raderChart = new Chart(ctx4,{
+          type: 'radar',
+          data: {
+            labels: ["STR", "CON", "DEX", "APP", "SIZ", "POW","INT", "EDU"],
+            datasets: [{
+                // label: 'status',
+                data: [18,8,12,12,16,12,14,19],
+                borderColor: "#000000",
+                backgroundColor: "rgba(88,88,88,0.5)"
+            }],
+          },
+          options: {
+              scale:{
+                ticks:{
+                  suggestedMin: 3,
+                  suggestedMax: 21,
+                  stepSize: 3,
+                }
+              },
+              layout: {
+                padding:{
+                  left:800,
+                  right:200,
+                  bottom:200
+                }
+              }
+            }
+        });
+        
+        const files = e.target.files
+        // this.file = files[0]
+        // 画像読み込み
+        var reader = new FileReader()
+        // ctx.drawImage(chara, 0, 0);
+        // reader.readAsPNG(this.file)
+        // ファイル読み込み完了時の処理
+        console.log("aaaa")
+        reader.onload = (event) => {
+          const chara = new Image();
+          chara.onload = () => {              // 　　　画像ファイル読込後の処理
+            var canvas幅 = canvas1.width;
+            var canvas高 = canvas1.height;
+            var 画像幅 = chara.naturalWidth;      // naturalWidthは元の画像の幅
+            var 画像高 = chara.naturalHeight;
+            var canvas縦横比 = (canvas高-50) / (canvas幅-50);
+            var 縦横比 = 画像高 / 画像幅;
+            if (縦横比 <= canvas縦横比) {        // 縦横比≦canvas縦横比→横長→canvasの横幅がネックに
+                var 圧縮後画像幅 = canvas幅-50;
+                var 圧縮率 = (canvas幅-50) / 画像幅;
+                var 圧縮後画像高 = 圧縮率 * 画像高;
+            }
+            else {                              // 縦長のとき
+                圧縮後画像高 = canvas高-50;
+                圧縮率 = (canvas高-50) / 画像高;
+                圧縮後画像幅 = 圧縮率 * 画像幅;
+            }
+            var 圧縮後画像幅2 = 700;
+            var 圧縮率2 = 700 / 画像幅;
+            var 圧縮後画像高2 = 圧縮率2 * 画像高;
+            
+            back.fillStyle = "white";
+            back.fillRect(25,25,1150,550);
+            back.globalCompositeOperation = "destination-over";
+            back.stroke();
+            ctx1.drawImage(chara, 25, 25, 圧縮後画像幅2, 圧縮後画像高2);       //　　　　画像をcanvasに表示
+            ctx2.drawImage(chara, 25, 25, 圧縮後画像幅, 圧縮後画像高);       //　　　　画像をcanvasに表示
+            ctx3.textAlign = "left";
+            ctx3.font = '40px Roboto medium';
+            ctx3.fillText("Pisca=Pisca•Pisces", 700, 100);
+
+
+            // back.fillStyle = 'white';
+            // back.fillRect(0, 0, canvas幅, canvas高);
+          }   
+          chara.src = event.target.result;
+          // this.content = content
+        //   content = readRegex(content)
+        //   content = content.split(/\n/)
+        //   this.readLog(content)
+          alert("ファイル読み込み完了")
+        }
+        reader.readAsDataURL(files[0]);    
+        // ファイル読み込みエラー時の処理
+        reader.onerror = () => {
+          alert("ファイル読み込みエラー")
+        }
+      }
+    }
+  })
+</script>
+
+</html>

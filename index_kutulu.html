@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Kutulu Character Sheet</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.3.2/dist/html2canvas.min.js"></script>
+    <style>
+        .status {
+            margin: 0.5rem;
+        }
+
+        .statusForm {
+            float: left;
+            width: 50%;
+        }
+
+        .skillForm {
+            float: right;
+            width: 50%;
+        }
+        /* ラジオボタンを四角いブロック形式にする */
+        input[type="radio"] {
+            display: none; /* チェック部分を不可視にする */
+        }
+
+        input[type="radio"] + label {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background-color: #ccc;
+            border: 2px solid #000;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        input[type="radio"]:checked + label {
+            background-color: #000; /* チェックされたときの背景色 */
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Kutulu Character Sheet</h1>
+    <div id="app">
+        <div class="box5">
+            <div id="characterForm">
+                <table>
+                    <tr>
+                        <td>氏名</td>
+                        <td><input type="text" name="name" v-model="name"></td>
+                    </tr>
+                    <tr>
+                        <td>年齢</td>
+                        <td><input type="number" name="age" v-model="age"></td>
+                    </tr>
+                    <tr>
+                        <td>称号</td>
+                        <td><input type="text" name="title" v-model="title"></td>
+                    </tr>
+                    <tr>
+                        <td>職業</td>
+                        <td><input type="text" name="job" v-model="job"></td>
+                    </tr>
+                    <tr>
+                        <td>出身</td>
+                        <td><input type="text" name="birthplace" v-model="birthplace"></td>
+                    </tr>
+                    <tr>
+                        <td>階級</td>
+                        <td><input type="text" name="rank" v-model="rank"></td>
+                    </tr>
+                    <tr>
+                        <td>家柄</td>
+                        <td><input type="text" name="lineage" v-model="lineage"></td>
+                    </tr>
+                    <tr>
+                        <td>性別</td>
+                        <td><input type="radio" name="sex" value="男" v-model="sex" checked />
+                            <label for="man">男</label>
+                            <input type="radio" name="sex" value="女" v-model="sex" />
+                            <label for="women">女</label>
+                            <input type="radio" name="sex" value="その他" v-model="sex" />
+                            <label for="other">その他</label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <h2 style="float: left; width: 50%;">ステータス
+                <span :style="{ color: sumStatus > 13 ? 'red' : 'black' }">{{ sumStatus }}</span>/13
+            </h2>
+            <h2 style="float: right; width: 50%;">技能
+                <span :style="{ color: sumSkill > 10 ? 'red' : 'black' }">{{ sumSkill }}</span>/10
+            </h2>
+            <div id="imageArea">
+                <form class="statusForm">
+                    <table class="status">
+                        <th>パッシブ</th>
+                        <tr v-for="(value, labelname) in statusPassive">
+                            <td>{{ labelname }}</td>
+                            <td v-for="i in 4">
+                                <input type="radio" :id=labelname+i :name="labelname" :value=i v-model.number="statusPassive[labelname]"
+                                    @click="resetStatus" />
+                                <label :for=labelname+i>{{ i }}</label>
+                            </td>
+                        </tr>
+                        <th>アクティブ</th>
+                        <tr v-for="(value, labelname) in statusActive">
+                            <td>{{ labelname }}</td>
+                            <td v-for="i in 4">
+                                <input type="radio" :id=labelname+i :name="labelname" :value=i v-model.number="statusActive[labelname]"
+                                    @click="resetStatus">
+                                <label :for=labelname+i >{{ i }}</label>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+
+                <form class="skillForm">
+                    <table class="status">
+                        <tr v-for="(value, labelname) in skill">
+                            <td>{{ labelname }}</td>
+                            <td v-for="i in 3">
+                                <input type="radio" :id=labelname+i :name="labelname" :value=i v-model.number="skill[labelname]"
+                                    @click="resetSkill" />
+                                <label :for=labelname+i>{{ i }}</label>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+            <br><br>
+            <button type="button" @click="makeCharacter">キャラコマ作成</button>
+            <button type="button" @click="makeImage">キャラシート画像作成</button>
+
+
+
+        </div>
+    </div>
+    <!-- Add your HTML content here -->
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                sex: '男',
+                name: '',
+                age: 0,
+                title: '',
+                job: '',
+                birthplace: '',
+                rank: '',
+                lineage: '',
+                statusPassive: {
+                    名声: 0,
+                    弁舌: 0,
+                    信用: 0,
+                    家格: 0
+                },
+                statusActive: {
+                    射撃: 0,
+                    白兵: 0,
+                    隠密: 0,
+                    敏捷: 0,
+                    筋力: 0
+                },
+                skill: {
+                    "人文学＆民俗学": 0,
+                    "考古学＆歴史学": 0,
+                    "図書館＆古文書学": 0,
+                    "経済学＆法学": 0,
+                    "芸術＆工芸": 0,
+                    "犯罪学": 0,
+                    "医学": 0,
+                    "機械工学": 0,
+                    "自然科学": 0,
+                    "オカルト": 0,
+                    "心理学": 0,
+                    "言語学": 0
+                },
+                // 他のデータプロパティ
+                sumSkill: 0,
+                sumStatus: 0,
+                arrayCommands: [],
+                arrayParams: [],
+                charCopyData: {
+                    "kind": "character",
+                    "data": {
+                        "name": "",
+                        "playerName": "",
+                        "memo": "",
+                        "initiative": 0,
+                        "externalUrl": "",
+                        "status": [],
+                        "params": [],
+                        "iconUrl": null,
+                        "faces": [],
+                        "x": 247,
+                        "y": -247,
+                        "z": 0,
+                        "angle": 0,
+                        "width": 4,
+                        "height": 4,
+                        "active": true,
+                        "secret": false,
+                        "invisible": false,
+                        "hideStatus": false,
+                        "color": "#888888",
+                        "commands": ""
+                    }
+                }
+            },
+            computed: {
+                totalStatus() {
+                    // 能力値をループして合計値を計算
+                    let sum = 0;
+                    for (let key in this.statusPassive) {
+                        sum += this.statusPassive[key];
+                    }
+                    for (let key in this.statusActive) {
+                        sum += this.statusActive[key];
+                    }
+                    return sum;
+                },
+                totalSkill() {
+                    // 技能値をループして合計値を計算
+                    let sum = 0;
+                    for (let key in this.skill) {
+                        sum += this.skill[key];
+                    }
+                    return sum;
+                }
+            },
+            watch: {
+                statusPassive: {
+                    handler() {
+                        this.updateStatusTotal();
+                    },
+                    deep: true
+                },
+                statusActive: {
+                    handler() {
+                        this.updateStatusTotal();
+                    },
+                    deep: true
+                },
+                skill: {
+                    handler() {
+                        this.updateSkillTotal();
+                    },
+                    deep: true
+                }
+            },
+            methods: {
+                resetData() {
+                    this.charCopyData.data.name = ""
+                    this.charCopyData.data.params = []
+                    this.charCopyData.data.status = []
+                    this.charCopyData.data.commands = ""
+                    this.charCopyData.data.initiative = 0
+                },
+                updateStatusTotal() {
+                    this.sumStatus = this.totalStatus;
+                },
+                updateSkillTotal() {
+                    this.sumSkill = this.totalSkill;
+                },
+                resetStatus(event) {
+                    const name = event.target.name;
+                    const value = Number(event.target.value);
+                    if (name in this.statusPassive) {
+                        if (this.statusPassive[name] === value) {
+                            this.statusPassive[name] = 0;
+                        }
+                    } else {
+                        if (this.statusActive[name] === value) {
+                            this.statusActive[name] = 0;
+                        }
+                    }
+                },
+                resetSkill(event) {
+                    const name = event.target.name;
+                    const value = Number(event.target.value);
+                    if (this.skill[name] === value) {
+                        this.skill[name] = 0;
+                    }
+                },
+                makeCharacter() {
+                    // キャラクターシートの要素を取得
+                    this.charCopyData.data.name = this.name;
+                    this.charCopyData.data.memo += "年齢：" + this.age + "\n";
+                    this.charCopyData.data.memo += "性別：" + this.sex + "\n";
+                    this.charCopyData.data.memo += "称号：" + this.title + "\n";
+                    this.charCopyData.data.memo += "職業：" + this.job + "\n";
+                    this.charCopyData.data.memo += "出身：" + this.birthplace + "\n";
+                    this.charCopyData.data.memo += "階級：" + this.rank + "\n";
+                    this.charCopyData.data.memo += "家柄：" + this.lineage + "\n";
+
+                    // ステータスを取得
+                    for (let key in this.statusPassive) {
+                        this.charCopyData.data.params.push({
+                            "label": key,
+                            "value": this.statusPassive[key]
+                        });
+                    }
+                    for (let key in this.statusActive) {
+                        this.charCopyData.data.params.push({
+                            "label": key,
+                            "value": this.statusActive[key]
+                        });
+                    }
+
+                    // コマンドを作成
+                    this.charCopyData.data.commands = "～判定～\n";
+                    for (let key in this.statusActive) {
+                        this.charCopyData.data.commands += "{" + key + "}KU 【" + key + "】\n";
+                    }
+                    this.charCopyData.data.commands += "～対抗～\n";
+                    for (let key in this.statusActive) {
+                        this.charCopyData.data.commands += "{" + key + "}KR 【" + key + "】\n";
+                    }
+                    var str = JSON.stringify(this.charCopyData);
+                    this.resetData();
+                    setTimeout(() => this.copyOperation(str), 100);
+                },
+                async copyOperation(text) {
+                    await navigator.clipboard.writeText(text);
+                    alert("コマ作ったよ！")
+                },
+                makeImage() {
+                    html2canvas(document.querySelector("#imageArea"),{
+                        width: 800,
+                        height: 600
+                    }).then(canvas => {
+                        var img = canvas.toDataURL("image/png");
+                        var a = document.createElement("a");
+                        a.href = img;
+                        a.download = "character_sheet.png";
+                        a.click();
+                    });
+                }
+            },
+            mounted() {
+                this.updateSkillTotal();
+                this.updateStatusTotal();
+            }
+        });
+    </script>
+</body>
+
+</html>

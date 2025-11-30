@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Character Sheet</title>
+    <script>
+        function rollDice() {
+            // STRは1D3
+            var STR = Math.floor(Math.random() * 3) + 1;
+            document.getElementById("STR").value = STR;
+            // CONは2D6
+            var CON = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+            document.getElementById("CON").value = CON;
+            // SIZは1
+            document.getElementById("SIZ").value = 1;
+            // INTは2D6+6
+            var INT = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 6;
+            document.getElementById("INT").value = INT;
+            // DEXは2D6+14
+            var DEX = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 14;
+            document.getElementById("DEX").value = DEX;
+            // EDUは3D6+3
+            var EDU = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 3;
+            document.getElementById("EDU").value = EDU;
+            // APPは3D6
+            var APP = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+            document.getElementById("APP").value = APP;
+            // POWは2D6+6
+            var POW = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 6;
+            document.getElementById("POW").value = POW;
+            
+            
+            
+        }
+        
+        function setStats() {
+            // Code to set the stats goes here
+        }
+    </script>
+</head>
+<body>
+    <h1>Character Sheet</h1>
+    <div id="app">
+    
+        <h2>Dice Rolling</h2>
+        <button @click="rollDice">Roll Dice</button>
+        
+        <h2>Stat Setting</h2>
+
+        <table>
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>STR</td>
+                <td><input type="number" id="STR" min="1" max="3" :value="STR" required></td>
+            </tr>
+            <tr>
+                <td>CON</td>
+                <td><input type="number" id="CON" min="2" max="12" :value="CON" required></td>
+            </tr>
+            <tr>
+                <td>SIZ</td>
+                <td><input type="number" id="SIZ" min="1" max="1" :value="SIZ" required></td>
+            </tr>
+            <tr>
+                <td>INT</td>
+                <td><input type="number" id="INT" min="8" max="18" :value="INT" required></td>
+            </tr>
+            <tr>
+                <td>DEX</td>
+                <td><input type="number" id="DEX" min="16" max="26" :value="DEX" required></td>
+            </tr>
+            <tr>
+                <td>EDU</td>
+                <td><input type="number" id="EDU" min="6" max="21" :value="EDU" required></td>
+            </tr>
+            <tr>
+                <td>APP</td>
+                <td><input type="number" id="APP" min="3" max="18" :value="APP" required></td>
+            </tr>
+            <tr>
+                <td>POW</td>
+                <td><input type="number" id="POW" min="8" max="18" :value="POW" required></td>
+            </tr>
+        </table>
+
+        <h2>Derived Stats</h2>
+        <table>
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>HP</td>
+                <td>{{ Math.floor((CON + SIZ) / 2) }}</td>
+            </tr>
+            <tr>
+                <td>MP</td>
+                <td>{{ POW }}</td>
+            </tr>
+            <tr>
+                <td>SEN</td>
+                <td>{{ POW * 5 }}</td>
+            </tr>
+            <tr>
+                <td>Mov</td>
+                <td>{{ Mov }}</td>
+            </tr>
+        </table>
+
+        <h2>Skills</h2>
+        <table>
+            <tr>
+                <th>Skill</th>
+                <th>初期値</th>
+                <th>職業ポイント</th>
+                <th>趣味ポイント</th>
+            </tr>
+            <tr>
+                <td>回避</td>
+                <td>{{ DEX*2 }}</td>
+                <td><input type="number" id="回避['職業']" min="1" max="99" :value="回避['職業']" required></td>
+                <td><input type="number" id="回避['趣味']" min="1" max="99" :value="回避['趣味']" required></td>
+            </tr>
+            <tr>
+                <td>敏捷</td>
+                <td><input type="number" id="敏捷" min="1" max="100" :value="敏捷" required></td>
+            </tr>
+            <tr>
+                <td>Luck</td>
+                <td><input type="number" id="LUCK" min="1" max="100" :value="LUCK" required></td>
+            </tr>
+        </table>
+    </div>
+
+
+        
+        <button type="submit">Set Stats</button>
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                STR: 1,
+                CON: 2,
+                SIZ: 1,
+                INT: 8,
+                DEX: 16,
+                EDU: 6,
+                APP: 1,
+                POW: 1,
+                SEN: 1,
+                IDEA: 1,
+                KNOW: 1,
+                LUCK: 1,
+                HP: 1,
+                MP: 1,
+                Mov: 12
+            },
+            methods: {
+                rollDice: function() {
+                    this.STR = Math.floor(Math.random() * 3) + 1;
+                    this.CON = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+                    if (this.CON < 4) {
+                        this.CON = 4;
+                    }
+                    this.SIZ = 1;
+                    this.INT = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 6;
+                    this.DEX = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 14;
+                    this.EDU = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 3;
+                    this.APP = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
+                    this.POW = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1 + 6;
+
+                }
+            }
+        });
+    </script>
+</body>
+</html>

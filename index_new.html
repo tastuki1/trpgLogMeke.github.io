@@ -8,9 +8,13 @@
     <title>ログ整形ツール</title>
     <h1>ログ整形</h1>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script type="text/javascript" src="./test.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+        integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="./yokogaki.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="text/javascript">
+        //配列をn個ずつに分割するメソッド
         Array.prototype.chunk = function (n) {
             len = Math.round(this.length / n, 10)
             ret = []
@@ -21,49 +25,73 @@
         }
         //おみくじとx回ダイスへの対応用メソッド
         function readRegex(str) {
-        const times_regex_g = /x\d+( |　)(CCB|CC|RESB)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
-        const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
-        const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
-        if (str.match(times_regex_g)) {
-            res = str.match(times_regex_g)
-            for (let r of res) {
-            if (times_with_skill_g.test(r)) {
-                dice = r.match(times_with_skill_g)
-                CCorCCB = dice[2]
-                value = dice[3]
-                skill = dice[4]
-                r_new = r.split("\n(1D100").join(`<br>${CCorCCB}&lt;=${value} 【${skill}】 (1D100`).split("\n").join('<br>').replaceAll('<br><br>','<br>')
-            }else{
-                r_new = r.split("\n").join('<br>').replaceAll('<br><br>','<br>')
+            // 正規表現の設定
+            // x回ダイスの正規表現
+            const times_regex_g = /x\d+( |　)(CCB|CC|RESB)(.*) (#\d+\n(.*)\n\n)+#\d+\n(.*)(スペシャル|成功|失敗)/g
+            // x回ダイスの正規表現(スキルあり)
+            const times_with_skill_g = /x\d+( |　)(CCB|CC)&lt;=(\d+) 【(.*)】 #\d+\n.*\n\n+#\d+\n.*(スペシャル|成功|失敗)/
+            // おみくじの正規表現
+            const omikuji_regex_g = /今日のあなたの運勢は……？ \n【.*】/g
+            // x回ダイスの正規表現と一致した場合の処理
+            if (str.match(times_regex_g)) {
+                // x回ダイスの正規表現と一致したすべての部分を取得
+                res = str.match(times_regex_g)
+                // 一致したそれぞれの部分に対して
+                for (let r of res) {
+                    // スキルがある場合
+                    if (times_with_skill_g.test(r)) {
+                        dice = r.match(times_with_skill_g)
+                        CCorCCB = dice[2]
+                        value = dice[3]
+                        skill = dice[4]
+                        // スキルがある場合の出力形式に変換
+                        r_new = r.split("\n(1D100").join(`<br>${CCorCCB}&lt;=${value} 【${skill}】 (1D100`).split("\n").join('<br>').replaceAll('<br><br>', '<br>')
+                    } else {
+                        // スキルがない場合の出力形式に変換
+                        r_new = r.split("\n").join('<br>').replaceAll('<br><br>', '<br>')
+                    }
+                    // 変換した部分を元の文字列に反映
+                    str = str.replace(r, r_new)
+                }
             }
-            // alert(r_new)
-            str = str.replace(r, r_new)
+            // おみくじの正規表現と一致した場合の処理
+            if (str.match(omikuji_regex_g)) {
+                // おみくじの正規表現と一致したすべての部分を取得
+                res = str.match(omikuji_regex_g)
+                // 一致したそれぞれの部分に対して
+                for (let r of res) {
+                    // おみくじの出力形式に変換
+                    r_new = r.split("\n").join('<br>')
+                    str = str.replace(r, r_new)
+                }
             }
+            // 変換した文字列を返す
+            return str
         }
-        if (str.match(omikuji_regex_g)) {
-            res = str.match(omikuji_regex_g)
-            for (let r of res) {
-            r_new = r.split("\n").join('<br>')
-            // alert(r_new)
-            str = str.replace(r, r_new)
-            }
-        }
-        // console.log(str)
-        return str
-        }
+        /**
+         * ログの整形を行う
+         * @param {string} logFileName ログファイル名
+         * @param {string} nameColor 文字色
+         * @param {string} frameColor 背景色
+         * @param {string} viewCheck タブ表示
+         * @param {string} content ログ内容
+         * @returns {string} 整形後のログ
+         */
         function logFileData() {
-            var result = window.confirm("ダウンロードしますか？");
-            if (result) {
-                var content = document.getElementById('contentText').innerHTML.split("><").join(">\n<");
-                var logFileName = document.getElementsByName('logFileName')[0].value;
-                var nameColor = document.getElementsByName('nameColor')[0].value;
-                var backColor = document.getElementsByName('backColor')[0].value;
-                var viewCheck = document.getElementById('viewCheckText').innerHTML.split("><").join(">\n<");
-                var copyText = returnTemplate(logFileName, nameColor, backColor, viewCheck, content);
+            if (window.confirm("ダウンロードしますか？")) {
+                const content = document.getElementById('contentText').innerHTML.replace(/> *</g, ">\n<");
+                const logFileName = document.getElementsByName('logFileName')[0].value;
+                const title = document.getElementsByName('title')[0].value;
+                const nameColor = document.getElementsByName('nameColor')[0].value;
+                const frameColor = document.getElementsByName('frameColor')[0].value;
+                const backColor = document.getElementsByName('backColor')[0].value;
+                const viewCheck = document.getElementById('viewCheckText').innerHTML.replace(/> *</g, ">\n<");
+
+                const copyText = returnTemplate(logFileName, title, nameColor, frameColor, backColor, viewCheck, content);
                 const blob = new Blob([copyText], { type: "text/html" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = logFileName + '.html';
+                link.download = `${logFileName}.html`;
                 link.click();
             }
         }
@@ -130,21 +158,17 @@
 
         details {
             padding: .5rem;
-            /* background-color: #e6ece3; */
-            /* background-color: #ffffff; */
             border: 1px solid #e6ece3;
             border-left: 3px solid #6b8e23;
         }
 
-        sammary {
-            margin: 0rem;
+        .growth_box {
+            padding: .5rem;
+
         }
 
-        .growth_box {
-            /* margin: 1rem; */
-            padding: .5rem;
-            /* padding-top: 0rem; */
-            
+        b {
+            display: block;
         }
 
         .box5 {
@@ -162,7 +186,7 @@
 
         .sample input {
             display: none;
-        } 
+        }
 
         .sample label {
             display: block;
@@ -199,16 +223,16 @@
 
         .tab {
             position: relative;
-            margin: 1rem 0 1rem 0;
+            margin: 1.5rem 0;
             padding: .5rem 1.5rem .5rem 1rem;
             box-sizing: border-box;
-            background: #f5f5f5;
+            background: rgba(127, 127, 127, 0.1);
             overflow-wrap: break-word;
         }
 
         .box {
             position: relative;
-            margin: 2rem 1rem 1.5rem;
+            margin: 2rem 1rem;
             padding: 1rem 1.5rem .5rem 1rem;
             border: solid 3px #707070;
             border-radius: 8px;
@@ -233,10 +257,19 @@
             color: #707070;
         }
 
-        bbbbb {
+        .bbb {
             display: block;
             content: "";
-            margin: 0.6rem;
+            margin: 0rem 0.6rem;
+        }
+
+        /* PCの記載 */
+        .char {
+            margin: 1rem 1rem 1rem 0.5rem;
+        }
+
+        .KP {
+            margin-left: .5rem;
         }
 
         @media screen and (max-width: 480px) {
@@ -262,16 +295,6 @@
 
             }
         }
-
-        /* PCの記載 */
-        p.char {
-            margin-left: .5rem;
-            text-indent: -.5rem;
-        }
-
-        p.KP {
-            margin-left: .5rem;
-        }
     </style>
 </head>
 
@@ -289,10 +312,11 @@
                     <table class=disp_check>
                         <tr>
                             <th>タブ表示　：</th>
-                            <td v-for="tab in tablist">
-                                <label class="switch-on" :for="tab.tabname">
-                                    <input type="checkbox" :id="tab.tabname" checked="checked" v-model="tab.visible" />
-                                    <span v-html="tab.tabname"></span>
+                            <td v-for="(tab, name) in tablist">
+                                <label class="switch-on" :for="name+'_dice'">
+                                    <input type="checkbox" :id="name+'_dice'" checked="checked"
+                                        v-model="tab.diceVisible" />
+                                    <span v-html="name"></span>
                                 </label>
                             </td>
                         </tr>
@@ -309,8 +333,8 @@
                         <tr>
                             <th>オプション：</th>
                             <td>
-                                <label class="switch-on" for="tabname">
-                                    <input type="checkbox" id="tabname" checked="checked" v-model="tabname.visible" />
+                                <label class="switch-on" for="tabName">
+                                    <input type="checkbox" id="tabName" checked="checked" v-model="tabName.visible" />
                                     タブ名表示
                                 </label>
                             </td>
@@ -330,29 +354,26 @@
                     </table>
 
                     <div id="growth_area">
-                        <template v-for="char in character">
-                            <template v-if="result[char.charname]">
-                                <h3 v-html="'＜'+char.charname+'＞'"></h3>
+                        <template v-for="(val,char) in character">
+                            <template v-if="result[char]">
+                                <h3 v-html="'＜'+char+'＞'"></h3>
                                 <template v-for="label in labels">
-                                    <table class="growth" v-if="result[char.charname][label.labelname]">
-                                        <template v-if="label.visible">
-                                            <caption>◯{{ label.labelname }}</caption>
-                                            <template v-for="line in result[char.charname][label.labelname]">
-                                                <template v-if="line.status">
-                                                    <tr
-                                                        v-if="status.visible&&tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                                                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                                                        <td class="ginou">{{ line.ginou }}</td>
-                                                        <td v-if="value.visible">＞ {{ line.value }}</td>
-                                                    </tr>
-                                                </template>
-                                                <template v-else>
-                                                    <tr v-if="tablist.filter((t) => t.tabname===line.tabname)[0].visible">
-                                                        <td v-if="tabname.visible" v-html="'['+line.tabname+']'"></td>
-                                                        <td class="ginou">{{ line.ginou }}</td>
-                                                        <td v-if="value.visible">＞ {{ line.value }}</td>
-                                                    </tr>
-                                                </template>
+                                    <table class="growth" v-if="result[char][label.labelname] && label.visible">
+                                        <caption>◯{{ label.labelname }}</caption>
+                                        <template v-for="line in result[char][label.labelname]">
+                                            <template v-if="line.status">
+                                                <tr v-if="status.visible && tablist[line.tabName].diceVisible">
+                                                    <td v-if="tabName.visible" v-html="'['+line.tabName+']'"></td>
+                                                    <td class="ginou">{{ line.ginou }}</td>
+                                                    <td v-if="value.visible">＞ {{ line.value }}</td>
+                                                </tr>
+                                            </template>
+                                            <template v-else>
+                                                <tr v-if="tablist[line.tabName].diceVisible">
+                                                    <td v-if="tabName.visible" v-html="'['+line.tabName+']'"></td>
+                                                    <td class="ginou">{{ line.ginou }}</td>
+                                                    <td v-if="value.visible">＞ {{ line.value }}</td>
+                                                </tr>
                                             </template>
                                         </template>
                                     </table>
@@ -360,23 +381,26 @@
                                 <br>
                             </template>
                         </template>
-                        <br>
-                        <br>
+                        <br><br>
                     </div>
                     <button type="button" @click="copy">結果をコピー</button>
                 </div>
+
             </details>
-
             <br>
-
+            <!-- グラフ作成ボタン -->
+            <!-- <button type="button" @click="createGraph">グラフ作成</button> -->
             <details>
                 <summary>表示形式サンプル</summary>
                 <div class="growth_box">
-                    <p class="char" style="color: rgb(127, 191, 255);">
+
+
+                    <div class="char" style="color: rgb(30, 144, 255);">
                         <b>キャラクタ名</b>
-                        <br> <span> 人物を選ぶとこんな感じで表示されます</span>
-                        <br>
-                    </p>
+                        <p class="bbb">
+                            <span>情報を選ぶとこんな感じで表示されます</span> <br>
+                        </p>
+                    </div>
                     <div class="box">
                         <span class="box-title">アイテム名</span>
                         <p>
@@ -390,39 +414,55 @@
                     </p>
 
                     <div class="tab" style="border-left: 3px solid rgb(211, 13, 13);">
-                        <p class="char" style="color: rgb(112, 112, 112);">
+                        <div class="char" style="color: rgb(50, 150, 50);">
                             <b>キャラクタ名</b>
-                            <br> <span>メインと情報以外のタブはこんな感じ(左側のラインの色が選択できます)</span>
-                            <br>
-                        </p>
+                            <p class="bbb">
+                                <span>メインと情報以外のタブはこんな感じ(左側のラインの色が選択できます)</span>
+                            </p>
+                            </p>
+                        </div>
                     </div>
-                </div>
             </details>
+            <br>
+
+            <canvas id="diceGraph"></canvas>
 
             <br><br>
             <table width=400px>
                 <tbody>
                     <tr>
-                        <th align="left">タイトル設定</th>
+                        <th align="left">＜基本の設定＞</th>
                     </tr>
-                    <tr  style="width: 50%;">
-                        <td>ログ名</td>
-                        <td>
-                            <input type="text" name="logFileName" v-model="logFileName" />
+                    <tr style="width: 100%;">
+                        <td style="width: 8rem;">ファイル名</td>
+                        <td style="width: 15rem;">
+                            <input type="text" style="width: 12rem;" 　name="logFileName" v-model="logFileName" /> .html
                         <td>
                     </tr>
                     <tr>
-                        <td>文字色</td>
+                        <td>タイトル</td>
+                        <td>
+                            <input type="text" style="width: 15rem;" 　name="title" v-model="title" />
+                        </td>
+                    <tr>
+                        <td>タイトル色</td>
                         <td>
                             <input type="color" name="nameColor" v-model="nameColor" />
                         </td>
                     </tr>
                     <tr>
+                        <td>外枠色</td>
+                        <td>
+                            <input type="color" name="frameColor" v-model="frameColor" />
+                        </td>
+                    </tr>
+                    <tr　style="display:none;">
                         <td>背景色</td>
                         <td>
                             <input type="color" name="backColor" v-model="backColor" />
                         </td>
                     </tr>
+
                 </tbody>
             </table>
 
@@ -431,16 +471,17 @@
             <table width=300px class="tabs">
                 <tbody>
                     <tr>
-                        <th colspan="3" align="left">タブ設定(チェックしたものを出力)</th>
+                        <th colspan="4" align="left">＜タブ設定＞ ※チェックありを出力</th>
                     </tr>
-                    <template v-for="tab in tablist">
+                    <template v-for="(tab, name) in tablist">
                         <tr>
                             <td>
                                 <input type="checkbox" name="tablist[][visible]" v-model="tab.visible" />
                             </td>
-                            <td v-html="tab.tabname"></td>
-                            <td v-if="tab.tabname!=='メイン' && tab.tabname!=='情報'">
-                                <input type="color" name="tablist[][color]" v-model="tab.color" />
+                            <td v-html="name"></td>
+                            <td v-if="name!=='メイン' && name!=='情報'">
+                                <input type="color" name="tablist[][color]" :value="tab.color"
+                                    @input="tab.color = $event.target.value" @change="changeColor" />
                             </td>
                         </tr>
                     </template>
@@ -452,22 +493,18 @@
             <table class="equal_table">
                 <tbody>
                     <tr align="left">
-                        <th>キャラクタ設定</th>
+                        <th>＜キャラクタ設定＞</th>
                     </tr>
-                    <tr :class="user.charname" v-for="(user,index) in character">
-                        <td width="50%" v-html="user.charname"></td>
+                    <tr :class="name" v-for="(user,name) in character">
+                        <td width="50%" v-html="name"></td>
                         <td width="40%">
                             <div class="sample">
-                                <input type="radio" :id="user.charname+'_char'" value="character"
-                                    v-model="user.style" />
-                                <label class="switch-on" :for="user.charname+'_char'"
-                                    style="display: inline-block;">人物</label>
-                                <input type="radio" :id="user.charname+'_item'" value="item" v-model="user.style" />
-                                <label class="switch-on" :for="user.charname+'_item'"
-                                    style="display: inline-block;">情報</label>
-                                <input type="radio" :id="user.charname+'_scene'" value="scene" v-model="user.style" />
-                                <label class="switch-on" :for="user.charname+'_scene'"
-                                    style="display: inline-block;">場面</label>
+                                <input type="radio" :id="name+'_char'" value="character" v-model="user.style" />
+                                <label class="switch-on" :for="name+'_char'" style="display: inline-block;">人物</label>
+                                <input type="radio" :id="name+'_item'" value="item" v-model="user.style" />
+                                <label class="switch-on" :for="name+'_item'" style="display: inline-block;">情報</label>
+                                <input type="radio" :id="name+'_scene'" value="scene" v-model="user.style" />
+                                <label class="switch-on" :for="name+'_scene'" style="display: inline-block;">場面</label>
                             </div>
                         </td>
                         <td width="15%">
@@ -478,112 +515,128 @@
             </table>
             <br><br>
 
-            <div id="viewCheckText" style="display: none;">
+            <div id="viewCheckText" style="display:none;">
                 <div class="viewCheck">
-                    <span v-for="tab in tablist">
-                        <template v-if="tab.visible">
-                        <label :for="tab.tabname" v-if="!tab.tabname.match(/メイン|情報/)">
-                            <input type="checkbox" :id="tab.tabname" checked="checked"
-                                :onchange="'c_disp(this, \''+tab.tabname+' tab\')'" />
-                            <span :id="tab.tabname" v-html="tab.tabname"></span>
-                        </label>
+                    <span v-for="(tab, name) in tablist">
+                        <template v-if="tab.visible && name!=='メイン' && name!=='情報'">
+                            <div>
+                                <input type="checkbox" :id="name" checked="checked"
+                                    :onchange="'c_disp(this, \''+name+' tab\')'" :style="{'accent-color': tab.color}" />
+                                <label :for="name">
+                                    <span :id="name+'_label'" v-html="name"></span>
+                                </label>
+                            </div>
                         </template>
                     </span>
                 </div>
             </div>
             <button onclick="logFileData()">ダウンロード</button>
-            
-            <div id="contentText" style="display: none;">
+
+            <!-- ログ表示エリア -->
+            <div id="contentText" style="display:none;">
                 <template v-for="tab in component">
-                <div v-if="tablist.find((t) => t.tabname === tab.tabname).visible"
-                    :style="'border-left: 3px solid ' + tablist.find((t) => t.tabname === tab.tabname).color"
-                    :class="tab.tabname==='メイン'||tab.tabname==='情報' ? 'メイン' : tab.tabname+' tab'">
-                    <template v-for="con in tab.value">
-                        <template v-if="character.find((u) => u.charname === con.charname).style==='character'">
-                            <p class="char" :style="'color:'+character.find((u) => u.charname === con.charname).color">
-                                <b v-html="con.charname" v-if="con.charname!==''"></b>
-                                <template v-for="ccc in con.line">
-                                    <template v-for="c in ccc">
-                                    <span v-if="Object.keys(c.dice).length" :style="c.dice" v-html="c.content"></span>
-                                    <span v-else v-html="c.content"></span><br>
-                                    </template>
-                                    <bbbbb></bbbbb>
-                                </template>
-                            </p>
-                        </template>
-                        <template v-else-if="character.find((u) => u.charname === con.charname).style==='item'">
-                            <div class="box">
-                                <span class="box-title" v-html="con.charname"></span>
-                                <p>
-                                    <template v-for="ccc in con.line">
+                    <div v-if="tablist[tab.tabName].visible"
+                        :style="'border-left: 3px solid ' + tablist[tab.tabName].color"
+                        :class="tab.tabName==='メイン'||tab.tabName==='情報' ? 'メイン' : tab.tabName+' tab'">
+                        <template v-for="con in tab.value">
+                            <template v-if="character[con.charName].style==='character'">
+                                <div class="char" :style="'color:'+character[con.charName].color">
+                                    <b v-html="con.charName"></b>
+                                    <p class="bbb" v-for="ccc in con.line">
+                                        <template v-for="c in ccc">
+                                            <span v-if="Object.keys(c.dice).length" :style="c.dice"
+                                                v-html="c.content"></span>
+                                            <span v-else v-html="c.content"></span><br>
+                                        </template>
+                                    </p>
+                                </div>
+                            </template>
+                            <template v-else-if="character[con.charName].style==='item'">
+                                <div class="box">
+                                    <span class="box-title" v-html="con.charName"></span>
+                                    <p class="bbb" v-for="ccc in con.line">
                                         <template v-for="c in ccc">
                                             <span v-html="c.content"><br></span>
                                             <br>
                                         </template>
-                                        <bbbbb></bbbbb>
+                                    </p>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <p class="KP" v-html :style="'color:'+character[con.charName].color">{{ con.charName }}
+                                </p>
+                                <p class="bbb" v-for="ccc in con.line">
+                                    <template v-for="c in ccc">
+                                        <span v-html="c.content"></span><br>
                                     </template>
                                 </p>
-                            </div>
+                            </template>
                         </template>
-                        <template v-else>
-                            <h3 v-html="con.charname"></h3>
-                            <p class="KP" style="color:#707070">
-                                <template v-for="c in con.line">
-                                    <span v-html="c.content"><br></span>
-                                    <br>
-                                </template>
-                            </p>
-                        </template>
-                    </template>
-                </div>
+                    </div>
                 </template>
             </div>
         </div>
     </div>
 </body>
 <script>
+    const DEFAULT_COLOR = "#ffffff";
+    const BACK_COLOR = "#ffffff";
+    const FRAME_COLOR = "#6b8e23";
+    const DEFAULT_DICE_PATH = "./defaultDice6th.json"
+
+    const blueBackground = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' };
+    const redBackground = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' };
+
+    const regex = / 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+    const regex_d100 = /.* \(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
+
     var makeLog = new Vue({
+
         el: "#makeLog",
         data: {
             isLoading: false,
             logFileName: "log",
-            nameColor: "#ffffff",
-            backColor: "#6b8e23",
+            title: "ログ",
+            nameColor: DEFAULT_COLOR,
+            frameColor: FRAME_COLOR,
+            backColor: BACK_COLOR,
             file: {},
             component: [],
             result: [],
-            tablist: [],
-            character: [],
-            tabname: { visible: true },
+            tablist: {},
+            character: {},
+            tabName: { visible: true },
             value: { visible: true },
             status: { visible: true },
-            b_content: {
-                tabname: "",
-                charname: ""
-            },
             labels: [
                 { labelname: "クリティカル", visible: true },
                 { labelname: "スペシャル", visible: true },
                 { labelname: "ファンブル", visible: true },
-                { labelname: "初期値成功", visible: true }
+                { labelname: "初期値成功", visible: true },
+                { labelname: "通常成功", visible: false },
+                { labelname: "通常失敗", visible: false }
             ],
             copyText: "",
-            defaultDice: ["&lt;=25 【キック】", "&lt;=25 【組み付き】", "&lt;=50 【こぶし（パンチ）】",
-                        "&lt;=10 【頭突き】", "&lt;=25 【投擲】", "&lt;=1 【マーシャルアーツ】", "&lt;=20 【拳銃】",
-                        "&lt;=15 【サブマシンガン】", "&lt;=30 【ショットガン】", "&lt;=15 【マシンガン】", "&lt;=25 【ライフル】",
-                        "&lt;=30 【応急手当】", "&lt;=1 【鍵開け】", "&lt;=15 【隠す】", "&lt;=10 【隠れる】", "&lt;=25 【聞き耳】",
-                        "&lt;=10 【忍び歩き】", "&lt;=10 【写真術】", "&lt;=1 【精神分析】", "&lt;=10 【追跡】", "&lt;=40 【登攀】",
-                        "&lt;=25 【図書館】", "&lt;=25 【目星】", "&lt;=20 【運転】", "&lt;=20 【機械修理】",
-                        "&lt;=1 【重機械操作】", "&lt;=5 【乗馬】", "&lt;=25 【水泳】", "&lt;=5 【製作】", "&lt;=1 【操縦】",
-                        "&lt;=25 【跳躍】", "&lt;=10 【電気修理】", "&lt;=10 【ナビゲート】", "&lt;=1 【変装】",
-                        "&lt;=5 【言いくるめ】", "&lt;=15 【信用】", "&lt;=15 【説得】", "&lt;=5 【値切り】", "&lt;=70 【母国語】",
-                        "&lt;=5 【医学】", "&lt;=5 【オカルト】", "&lt;=1 【化学】", "&lt;=0 【クトゥルフ神話】", "&lt;=5 【芸術】",
-                        "&lt;=10 【経理】", "&lt;=1 【考古学】", "&lt;=1 【コンピューター】", "&lt;=5 【心理学】",
-                        "&lt;=1 【人類学】", "&lt;=1 【生物学】", "&lt;=1 【地質学】", "&lt;=1 【電子工学】", "&lt;=1 【天文学】",
-                        "&lt;=10 【博物学】", "&lt;=1 【物理学】", "&lt;=5 【法律】", "&lt;=1 【薬学】", "&lt;=20 【歴史】"]
+            datasets: [],
+            defaul　tDice: []
         },
         methods: {
+            /**
+             * ログ内容のリセット
+             */
+            reset() {
+                this.result = []
+                this.tablist = { "メイン": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true }, "情報": { color: "rgba(255,255,255,0)", visible: true, "diceVisible": true } }
+                this.character = {}
+                this.component = []
+                this.readDefaultDice()
+                this.datasets = []
+            },
+            /**
+            * テキストコピー
+            */
             copy() {
+                // コピーするテキストを取得
                 const copyText = this.$el.querySelector('#growth_area').innerText
                 navigator.clipboard
                     .writeText(copyText)
@@ -595,176 +648,319 @@
                         console.error(e)
                     })
             },
-            analizeDice(tabname, charname, content) {
-                if (content.trim() !== '') {
-                    var growth = {};
-                    var regex = / 【(.*)】.*\(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
-                    var regex_d100 = /.* \(1D100&lt;=\d+\) ＞ (\d+) ＞ (.*)/;
-                    const num = this.component.length - 1
+            changeColor() {
+                for (let [key, value] of Object.entries(this.tablist)) {
 
-                    var content = content.split("<br>")
-                    temp_cont = []
-
-                    for (let cont of content) {
-                        var dice = {}
-                        var label = ""
-                        if (cont.trim() === ''){
-                            if (num >= 0 && this.component[num].tabname === tabname) {
-                                var last = this.component[num].value.length - 1
-                                if (last >= 0 && this.component[num].value[last].charname === charname) {
-                                    this.component[num].value[last].line.push(temp_cont);
-                                } else {
-                                    this.component[num].value.push({ charname: charname, line: [temp_cont] });
-                                }
-                            } else {
-                                this.component.push({ tabname: tabname, value: [{ charname: charname, line: [temp_cont] }] });
-                            }
-                            temp_cont = [];
-                            continue;
-                        }else if (regex_d100.test(cont)) {
-                            // console.log(cont)
-                            var res = cont.match(regex_d100)[1]
-                            if (cont.match(/決定的成功/)) {
-                                dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
-                                label = "クリティカル"
-                            } else if (cont.match(/スペシャル/)) {
-                                dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
-                                label = "スペシャル"
-                            } else if (cont.match(/致命的失敗/)) {
-                                dice = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
-                                label = "ファンブル"
-                            } else if (cont.match(/成功|スペシャル/)) {
-                                dice = { background: 'linear-gradient(transparent 70%, #7fbfff 0%)' }
-                                var judge = cont.match(/&lt;=\d+ 【.*】/)
-                                if (judge && this.defaultDice.includes(judge[0])) {
-                                    label = "初期値成功"
-                                }
-                            } else {
-                                dice = { background: 'linear-gradient(transparent 70%, #ff7f7f 0%)' }
-                            }
-                            if (label != "") {
-                                var s_regex = /SAN値チェック|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
-                                var status = false
-                                var skill = ""
-                                //ステータス依存の項目の場合はstatusをtrueにする
-                                if (s_regex.test(cont)) {
-                                    status = true
-                                }
-                                if (regex.test(cont)) {
-                                    skill = cont.match(regex)[1]
-                                }
-                                if (!this.result[charname]) {
-                                    this.result[charname] = {}
-                                    this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, status: status }]
-                                } else if (!this.result[charname][label]) {
-                                    this.result[charname][label] = [{ tabname: tabname, ginou: skill, value: res, status: status }]
-                                } else {
-                                    this.result[charname][label].push({ tabname: tabname, ginou: skill, value: res, status: status })
-                                }
-                            }
-                        }
-                        temp_cont.push({ content: cont, dice: dice })
-                    }
-                    // this.component.push("{tabname:"+tabname+", charname:"+charname+", content:"+content+", dice:"+dice+"}")
-                    if (num >= 0 && this.component[num].tabname === tabname) {
-                        var last = this.component[num].value.length - 1
-                        if (last >= 0 && this.component[num].value[last].charname === charname) {
-                            this.component[num].value[last].line.push(temp_cont);
-                        } else {
-                            this.component[num].value.push({ charname: charname, line: [temp_cont] });
-                        }
-                    } else {
-                        this.component.push({ tabname: tabname, value: [{ charname: charname, line: [temp_cont] }] });
+                    if (key !== "メイン" && key !== "情報") {
+                        // チェックボックスの色を変更
+                        document.getElementById(key).style = `accent-color: ${value.color}`;
                     }
                 }
             },
+            readDefaultDice() {
+                fetch(DEFAULT_DICE_PATH)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.defaultDice = data
+                    console.log('ダイスの初期値読み込み完了');
+                })
+                .catch(error => {
+                    console.error('読み込みエラー:', error);
+                });
+            },
+            /**
+            * ログファイルの解析
+            * @param {string} tabName タブ名
+            * @param {string} charName キャラクタ名
+            * @param {string} content ログ内容
+            */
+            analizeDice(tabName, charName, content) {
+                if (content.trim() !== '') {
+                    // 改行で分割
+                    let contents = content.split("<br>");
+                    let temp_cont = [];
+                    let dice = {};
+
+                    // 各行の解析
+                    for (let cont of contents) {
+                        // 空行の場合は値を追加して次の行へ
+                        if (cont.trim() === '') {
+                            this.addValue(tabName, charName, temp_cont);
+                            // 初期化
+                            temp_cont = [];
+                            continue;
+                            // ダイス行の場合はダイスの解析
+                        } else if (regex_d100.test(cont)) {
+                            dice = this.checkDice(cont, tabName, charName);
+                        }
+                        temp_cont.push({ content: cont, dice: dice });
+                    }
+                    // 値を追加
+                    this.addValue(tabName, charName, temp_cont);
+                }
+            },
+            /**
+             * 値の追加
+             * @param {string} tabName タブ名
+             * @param {string} charName キャラクタ名
+             * @param {string} line 行
+             */
+            addValue(tabName, charName, line) {
+                const num = this.component.length - 1;
+                // タブ名が同じ場合
+                if (num >= 0 && this.component[num].tabName === tabName) {
+                    const lastComponent = this.component[num];
+                    const lineNum = lastComponent.value.length - 1;
+                    const lastValue = lineNum >= 0 ? lastComponent.value[lineNum] : null;
+                    // キャラクタ名が同じ場合
+                    if (lastValue && lastValue.charName === charName) {
+                        this.component[num].value[lineNum].line.push(line);
+                        // キャラクタ名が異なる場合
+                    } else {
+                        this.component[num].value.push({ charName: charName, line: [line] });
+                    }
+                    // タブ名が異なる場合
+                } else {
+                    this.component.push({ tabName: tabName, value: [{ charName: charName, line: [line] }] });
+                }
+            },
+            /**
+             * ダイスの解析
+             * @param {string} cont ログ内容
+             * @param {string} tabName タブ名
+             * @param {string} charName キャラクタ名
+             */
+            checkDice(cont, tabName, charName) {
+                // ダイスの解析
+                label = "";
+                dice = redBackground;
+                let res = cont.match(regex_d100)[1];
+                if (cont.match(/決定的成功|スペシャル/)) {
+                    dice = blueBackground;
+                    label = cont.match(/決定的成功/) ? "クリティカル" : "スペシャル";
+                } else if (cont.match(/致命的失敗/)) {
+                    dice = redBackground;
+                    label = "ファンブル";
+                } else if (cont.match(/成功/)) {
+                    dice = blueBackground;
+                    const judge = cont.match(/&lt;=\d+ 【.*】/);
+                    if (judge && this.defaultDice.includes(judge[0])) {
+                        label = "初期値成功";
+                    } else {
+                        label = "通常成功";
+                    }
+                } else if (cont.match(/失敗/)) {
+                    dice = redBackground;
+                    label = "失敗";
+                }
+                // ラベルがある場合
+                if (label !== "") {
+                    const s_regex = /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/;
+                    // ステータス判定
+                    let status = s_regex.test(cont);
+                    // 技能名の取得
+                    let skillMatch = cont.match(regex);
+                    let skill = skillMatch ? skillMatch[1] : "";
+                    // キャラクタがない場合は追加
+                    if (!this.result[charName]) { this.result[charName] = {}; }
+                    // ラベルがない場合は追加
+                    if (!this.result[charName][label]) { this.result[charName][label] = []; }
+                    // ダイスの追加
+                    this.result[charName][label].push({ tabName: tabName, ginou: skill, value: res, status: status });
+                }
+                return dice;
+            },
+            /**
+             * ログファイルの読み込み
+             * @param {Event} e イベント
+             * @returns {boolean} ファイル情報取得エラー
+             * @returns {boolean} ファイル読み込み完了
+            */
             readLogFile: function (e) {
-                this.result = []
-                this.tablist = [{ tabname: "メイン", color: "#ffffff", visible: true }, { tabname: "情報", color: "#ffffff", visible: true }]
-                this.character = []
-                this.component = []
+                // 初期化
+                this.reset()
+                // ファイルの取得
                 const files = e.target.files
                 this.file = files[0]
                 this.logFileName = this.file.name.replace(/\[.+\](.*)/, "").replace(/\.html/, "")
+                this.title = this.logFileName
                 var reader = new FileReader()
+                // ファイル読み込み開始
                 reader.readAsText(this.file)
                 // ファイル読み込み完了時の処理
                 reader.onload = () => {
                     var content = reader.result
-                    if(this.readLog(readRegex(content))){
+                    if (this.readLog(readRegex(content))) {
                         alert("ファイル読み込み完了")
-                    }else{
+                        // グラフを作成
+                        this.createGraph()
+                    } else {
                         alert("ファイル情報取得エラー")
                     }
-                    // console.log(file_reader.result)     
                 }
                 // ファイル読み込みエラー時の処理
                 reader.onerror = () => {
                     alert("ファイル読み込みエラー")
                 }
             },
+            /**
+             * ログファイルの解析
+             * @param {*} content 
+             * @returns 
+             */
             readLog(content) {
-                var charname, style, color, tabname = ""
+                // 初期値
+                var charName, style, color, tabName = ""
                 list = ["system"]
                 ary = []
-                var errorCount = 0
-                var contentArray = content.split(/\n\s\s\s\s\n/);
-                try{
-                    for(block of contentArray){
-                        var line = block.split(/\n/)
-                        if(!line[1].match(/<span> \[(.*)\]</)){
-                            // alert(line[0])
-                            errorCount += 1
-                            if(errorCount > 2){
-                                return false
-                            }else{
-                                continue
-                            }
-                        }
-                        tabname = line[1].match(/<span> \[(.*)\]</)[1];
+                const regex = /<p style="color:(#[0-9a-z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S]*?)\n\s*<\/span>\s+<\/p>/g
 
-                        // ココフォリアアプデ暫定対応
-                        if(tabname=="main"){tabname="メイン"}
-                        else if(tabname=="info"){tabname="情報"}
-                        else if(tabname=="other"){tabname="雑談"}
+                // マッチング実行
+                const matches = content.matchAll(regex);
 
-                        if (!this.tablist.some((u) => u.tabname === tabname)) {
-                            this.tablist.push({ tabname: tabname, color: "#707070", visible: true })
-                        }
-                        if (line[1].match(/<span> \[(.*)\]</) && line[2] && line[2].match(/>(.*)</)) {
-                            charname = line[2].match(/>(.*)</)[1]
-                            if (list.includes(charname)) {
-                                style = "character"
-                                ary = ary.filter(item => item.charname != charname)
-                                if (line[0].match(/color:(.*);/)[1] == "#888888") {
-                                    color = "#707070"
-                                } else {
-                                    color = line[0].match(/color:(.*);/)[1]
-                                }
-                            } else {
-                                style = "item"
-                                list.push(charname)
-                                color = "#707070"
-                            }
-                            this.analizeDice(tabname, charname, line[4])
+                try {
+                    // 各ブロックごとに処理
+                    for (const match of matches) {
 
-                            ary.push({ charname: charname, style: style, color: color })
+                        charColor = match[1]                    // キャラクタの色の取得
+                        tabName = this.gettabName(match[2]);    // タブ名の取得
+                        charName = match[3]                     // キャラクタ名の取得
+                        content = match[4]                      // 内容の取得
+                        style = "item"                          // スタイルの初期値
+
+                        // タブリストにタブ名がない場合は追加
+                        if (!this.tablist[tabName]) {
+                            this.tablist[tabName] = { color: this.getRandomColor(), visible: true, diceVisible: true }
                         }
-                    
-                    // })
+
+                        // キャラクタ名がリストにある場合はスタイルを変更
+                        if (this.character[charName]) {
+                            this.character[charName].style = "character"
+
+                            // キャラクタ名の色を変更
+                            this.character[charName].color = charColor
+
+                            // キャラクタ名がリストにない場合は追加
+                        } else {
+                            this.character[charName] = { color: charColor, style: "item" }
+                        }
+                        // ダイスの解析
+                        this.analizeDice(tabName, charName, content)
                     }
-                    this.character = ary.sort((a, b) => {
-                        if (a.style < b.style) return -1;
-                        if (a.style > b.style) return 1;
-                        if (a.charname < b.charname) return -1;
-                        if (a.charname > b.charname) return 1;
-                        return 0
-                    })  
+                    // キャラクタリストのソート
+                    // キャラクタ名でstyleがcharacterのものを先頭に移動したのち、それぞれのキャラクタ名でソート
+                    this.character = Object.fromEntries(Object.entries(this.character).sort((a, b) => {
+                        if (a[1].style === b[1].style) {
+                            return a[0] < b[0] ? -1 : 1
+                        } else {
+                            return a[1].style === "character" ? -1 : 1
+                        }
+                    }))
+
                     return true
-                }catch{
+                } catch {
                     return false
                 }
+            },
+            /**
+             * タブ名の取得
+             * @param {string} rawtabName タブ名
+             * @returns {string} タブ名
+             */
+            gettabName(rawtabName) {
+                switch (rawtabName) {
+                    case "main": return "メイン";
+                    case "info": return "情報";
+                    case "other": return "雑談";
+                    default: return rawtabName;
+                }
+            },
+            createGraph() {
+                const ctx = document.getElementById('diceGraph').getContext('2d');
+
+                // X軸のラベルを設定
+                const labels = Array.from({ length: 20 }, (_, i) => (i * 5 + 1).toString() + "-" + ((i + 1) * 5).toString()); // Update labels for 1 to 100 dice rolls
+                var color = DEFAULT_COLOR
+                for (char in this.result) {
+                    if (char === "chunk") continue;
+                    if (!this.character[char]) {
+                        color = this.getRandomColor();
+                    } else {
+                        color = this.character[char].color;
+                    }
+                    this.datasets.push({
+                        label: char,
+                        data: this.extractDiceInfo(char),
+                        backgroundColor: [color],
+                    });
+                };
+
+                // グラフの描画
+                // Y軸は「回数」、目盛りは0から、間隔は1
+                // X軸は「出目」、目盛りは1から100、間隔は5
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: this.datasets,
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                // 整数のみ表示
+                                ticks: {
+                                    stepSize: 1,
+                                    beginAtZero: true,
+                                },
+                                // 軸ラベル
+                                title: {
+                                    display: true,
+                                    text: '回数'
+                                }
+                            },
+                            x: {
+                                beginAtZero: true,
+                                // 軸ラベル
+                                title: {
+                                    display: true,
+                                    text: '出目'
+                                }
+                            }
+                        }
+                    },
+                })
+            },
+            extractDiceInfo(char) {
+
+                // 5刻みにダイスの出目を集計
+                let diceInfo = Array.from({ length: 20 }, () => 0);
+                // const diceInfo = Array.from({length: 100}, () => 0);
+                for (labels in this.result[char]) {
+                    for (dices in this.result[char][labels]) {
+                        let dice = this.result[char][labels][dices];
+                        // タブが表示されている場合のみ集計
+                        // if(this.tablist[dice.tabName] && this.tablist[dice.tabName].diceVisible){
+                        diceInfo[Math.floor(dice.value / 5)]++;
+                        // }
+                    }
+                }
+                return diceInfo;
+            },
+            getRandomColor() {
+                const letters = '123456789AB';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 11)];
+                }
+                return color;
             }
+
         }
     })
 </script>

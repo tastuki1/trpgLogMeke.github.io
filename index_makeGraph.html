@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dice Information Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <canvas id="diceGraph"></canvas>
+
+    <script>
+        // Function to extract dice information from the HTML document
+        function extractDiceInfo() {
+            const diceInfo = [];
+            const diceElements = document.getElementsByTagName('p');
+            for (let i = 0; i < diceElements.length; i++) {
+                const diceText = diceElements[i].innerText;
+                if (diceText.includes('CCB')||diceText.includes('CC')) {
+                    const diceRoll = parseInt(diceText.split('＞')[1].trim());
+                    diceInfo.push(diceRoll);
+                }
+            }
+            return diceInfo;
+        }
+
+        // Function to create the line graph
+        function createGraph() {
+            const ctx = document.getElementById('diceGraph').getContext('2d');
+            const labels = Array.from({length: 100}, (_, i) => (i + 1).toString()); // Update labels for 1 to 100 dice rolls
+            const datasets = [
+                {
+                    label: 'Character 1',
+                    data: extractDiceInfo(),
+                    borderColor: getRandomColor(),
+                    fill: false,
+                },
+            ];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets,
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Dice Roll',
+                            },
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency',
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        // Function to generate random color for each character
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Call the createGraph function when the page is loaded
+        window.addEventListener('load', createGraph);
+    </script>
+</body>
+</html>
