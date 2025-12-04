@@ -1,8 +1,12 @@
 # ====================
 # 依存関係
 # ====================
-# npm install で復元可能なため、Gitで管理不要
+# pnpm install で復元可能なため、Gitで管理不要
 node_modules/
+.pnpm-store/
+
+# npm lockfile (pnpm移行後は不要)
+package-lock.json
 
 # ====================
 # ビルド成果物

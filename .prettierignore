@@ -1,0 +1,20 @@
+# 依存関係
+node_modules
+
+# ビルド成果物
+dist
+dist-ssr
+
+# ログファイル
+*.log
+
+# 旧実装（参照用）
+legacy
+
+# lockfiles
+pnpm-lock.yaml
+package-lock.json
+
+# その他
+.DS_Store
+coverage
