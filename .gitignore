@@ -8,6 +8,9 @@ node_modules/
 # npm lockfile (pnpm移行後は不要)
 package-lock.json
 
+# AI補助ツールが作る一時 worktree
+.claude/
+
 # ====================
 # ビルド成果物
 # ====================
@@ -76,6 +79,8 @@ lerna-debug.log*
 # テスト実行時に生成されるレポート
 coverage/
 *.lcov
+test-results/
+playwright-report/
 
 # ====================
 # 学習用ノート（個人用）
