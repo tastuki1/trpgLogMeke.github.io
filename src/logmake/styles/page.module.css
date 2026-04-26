@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=BIZ+UDGothic:wght@400;700&display=swap');
+
+:global(body) {
+  -webkit-text-size-adjust: 100%;
+  background-color: #6b8e23;
+  color: #222;
+  font-family: sans-serif;
+}
+
+.page {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 2rem;
+}
+
+.hero {
+  padding: 1rem 2rem 0;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  color: #fff;
+  font-family: 'BIZ UDGothic', 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+}
+
+.box5 {
+  padding: 1.5rem;
+  margin: 1rem;
+  border: double 5px #6b8e23;
+  background-color: #fff;
+}
+
+.alert {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0;
+  border: 1px solid rgba(169, 100, 92, 0.18);
+  background: rgba(255, 244, 240, 0.9);
+  color: #7a443d;
+}
+
+.alert h2 {
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+.alert ul {
+  padding-left: 1.25rem;
+}
+
+.status {
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+  color: #222;
+}
+
+@media screen and (max-width: 480px) {
+  .page {
+    padding: 0 0 2rem;
+  }
+
+  .hero {
+    padding: 0.5rem 1rem 0;
+  }
+
+  .box5 {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+}
