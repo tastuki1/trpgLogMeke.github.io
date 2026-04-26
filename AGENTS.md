@@ -46,7 +46,7 @@ trpgLogMeke.github.io/
 ├── .github/workflows/       # GitHub Actions設定
 │   └── deploy.yml
 ├── .gitignore               # Git追跡除外設定
-├── CLAUDE.md                # このファイル（AI開発補助用）
+├── AGENTS.md                # このファイル（AI開発補助用）
 ├── README.md                # プロジェクト説明（ユーザー向け）
 ├── package.json             # 依存関係定義
 ├── vite.config.ts           # Vite設定
@@ -154,9 +154,9 @@ trpgLogMeke.github.io/
 
 <body>
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+🤖 Generated with [Codex](https://Codex.com/Codex)
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Codex <noreply@anthropic.com>
 ```
 
 **Type一覧**:
@@ -333,7 +333,7 @@ main (本番)
 
 ## 連絡事項
 
-### AI開発補助（Claude Code）の役割
+### AI開発補助（Codex）の役割
 
 - コード生成時に意味と意図を説明
 - Git操作の意味を解説
