@@ -1,5 +1,4 @@
 import type {
-  GameSystem,
   GrowthFilters,
   GrowthLabel,
   LogmakeSettings,
@@ -15,28 +14,6 @@ export const SUCCESS_HIGHLIGHT =
 export const FAILURE_HIGHLIGHT =
   'linear-gradient(transparent 70%, #ff7f7f 0%)'
 
-export const STATUS_REGEX =
-  /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/
-
-const COC6_LABELS: GrowthLabel[] = [
-  'クリティカル',
-  'スペシャル',
-  'ファンブル',
-  '初期値成功',
-  '通常成功',
-  '通常失敗',
-]
-
-const COC7_LABELS: GrowthLabel[] = [
-  'クリティカル',
-  'イクストリーム',
-  'ハード',
-  'ファンブル',
-  '初期値成功',
-  '通常成功',
-  '通常失敗',
-]
-
 const TAB_COLOR_PALETTE = [
   '#8e5c5c',
   '#597da7',
@@ -47,10 +24,6 @@ const TAB_COLOR_PALETTE = [
   '#ab5a7b',
   '#8c7a45',
 ]
-
-export function getLabelsForSystem(system: GameSystem): GrowthLabel[] {
-  return system === 'CoC7' ? COC7_LABELS : COC6_LABELS
-}
 
 export function createBaseTabs(): Record<string, TabConfig> {
   return {
@@ -78,11 +51,11 @@ export function createDefaultSettings(baseName = 'log'): LogmakeSettings {
 }
 
 export function createGrowthFilters(
-  system: GameSystem,
+  labels: GrowthLabel[],
   previous?: GrowthFilters,
 ): GrowthFilters {
-  const labels = Object.fromEntries(
-    getLabelsForSystem(system).map((label) => [
+  const labelVisibility = Object.fromEntries(
+    labels.map((label) => [
       label,
       previous?.labels[label] ??
         !['通常成功', '通常失敗'].includes(label),
@@ -90,7 +63,7 @@ export function createGrowthFilters(
   ) as GrowthFilters['labels']
 
   return {
-    labels,
+    labels: labelVisibility,
     visibility: {
       tabName: previous?.visibility.tabName ?? true,
       value: previous?.visibility.value ?? true,
@@ -119,10 +92,7 @@ export function getTabDisplayName(rawTabName: string): string {
 export function createTabConfig(name: string): TabConfig {
   return {
     name,
-    color:
-      name === 'メイン' || name === '情報'
-        ? 'rgba(255,255,255,0)'
-        : getStableTabColor(name),
+    color: isPrimaryTab(name) ? 'rgba(255,255,255,0)' : getStableTabColor(name),
     visible: true,
   }
 }

@@ -1,4 +1,4 @@
-import { FAILURE_HIGHLIGHT, SUCCESS_HIGHLIGHT } from '@/logmake/lib/defaults'
+import { FAILURE_HIGHLIGHT, SUCCESS_HIGHLIGHT, isPrimaryTab } from '@/logmake/lib/defaults'
 import type {
   ContentParagraph,
   ContentToken,
@@ -65,15 +65,13 @@ export function buildOutputHtml(
 }
 
 function renderSection(section: OutputSection): string {
-  const className =
-    section.tabName === 'メイン' || section.tabName === '情報'
-      ? 'mainBlock'
-      : section.tabVisibilityClass
+  const className = isPrimaryTab(section.tabName)
+    ? 'mainBlock'
+    : section.tabVisibilityClass
 
-  const style =
-    section.tabName === 'メイン' || section.tabName === '情報'
-      ? ''
-      : ` style="border-left: 3px solid ${section.tabColor};"`
+  const style = isPrimaryTab(section.tabName)
+    ? ''
+    : ` style="border-left: 3px solid ${section.tabColor};"`
 
   return `<div class="${className}"${style}>
     ${section.entries.map(renderSpeaker).join('\n')}
