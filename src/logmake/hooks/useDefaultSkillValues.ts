@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 
-import type { GameSystem } from '@/logmake/types'
+import type { DefaultSkillValueMap } from '@/logmake/lib/defaultSkillValues'
+import type { LogmakeSystem } from '@/logmake/systems'
 
-export function useDefaultDice(system: GameSystem) {
-  const [data, setData] = useState<string[]>([])
+export function useDefaultSkillValues(system: LogmakeSystem) {
+  const [data, setData] = useState<DefaultSkillValueMap>({})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -15,14 +16,14 @@ export function useDefaultDice(system: GameSystem) {
       setError(null)
 
       try {
-        const path =
-          system === 'CoC6' ? '../defaultDice6th.json' : '../defaultDice7th.json'
-        const response = await fetch(new URL(path, window.location.href))
-        if (!response.ok) {
-          throw new Error('Failed to load default dice.')
+        if (!system.growth) {
+          if (isActive) {
+            setData({})
+          }
+          return
         }
 
-        const nextData = (await response.json()) as string[]
+        const nextData = await system.growth.loadDefaultSkillValues()
         if (isActive) {
           setData(nextData)
         }
