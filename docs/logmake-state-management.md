@@ -2,7 +2,7 @@
 
 ## 結論
 
-現在の logmake ページでは Zustand はまだ不要。`useLogmakePageState()` と props 受け渡しで、状態の流れを十分に追える。
+現在の logmake ページでは Zustand は不要。`useLogmakePageState()` と props 受け渡しで、状態の流れを十分に追える。
 
 ## 状態の分類
 
@@ -38,8 +38,8 @@ React の state は、すべてを同じ場所に置くと読みにくくなる�
 派生値は、元になる state から必ず計算できる値。
 
 ```txt
-source.rawHtml + system -> parsedLog
-parsedLog + system + defaultDice -> analysis
+source.rawHtml + selectedSystem -> parsedLog
+parsedLog + selectedSystem + defaultSkillValues -> analysis
 parsedLog + tabs + characters -> outputModel
 errors + parse warnings + analysis warnings -> warnings
 ```
@@ -52,7 +52,7 @@ errors + parse warnings + analysis warnings -> warnings
 
 `GrowthCheck` の表示フィルタは、成長判定欄の見た目だけに効く。出力 HTML、グラフ、タブ設定には直接関係しない。そのため `GrowthCheck` 内に置く。
 
-## Zustand をまだ入れない理由
+## Zustand を入れない理由
 
 - feature component は `App` の直下にあり、props の受け渡しが 1 段で済んでいる。
 - 複数ページで state を共有していない。
