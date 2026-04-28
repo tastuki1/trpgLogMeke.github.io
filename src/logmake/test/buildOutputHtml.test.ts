@@ -52,13 +52,33 @@ describe('buildOutputHtml', () => {
 
   it('escapes special characters in character names and tab toggle labels', () => {
     const modelWithSpecialNames: OutputModel = {
-      sections: [],
-      toggles: [{ name: 'タブ<"quoted">', color: '#ff0000' }],
+      sections: [
+        {
+          tabName: 'タブ<"quoted">',
+          tabColor: '#ff0000',
+          tabVisibilityClass: 'logmake-tab-0',
+          entries: [],
+        },
+      ],
+      toggles: [
+        {
+          name: 'タブ<"quoted">',
+          color: '#ff0000',
+          inputId: 'logmake-tab-0-toggle',
+          tabVisibilityClass: 'logmake-tab-0',
+        },
+      ],
     }
-    const output = buildOutputHtml(modelWithSpecialNames, createDefaultSettings('test'))
+    const output = buildOutputHtml(
+      modelWithSpecialNames,
+      createDefaultSettings('test')
+    )
 
     expect(output).not.toContain('タブ<"quoted">')
     expect(output).toContain('&lt;&quot;quoted&quot;&gt;')
+    expect(output).toContain('id="logmake-tab-0-toggle"')
+    expect(output).toContain('onchange="c_disp(this, \'logmake-tab-0\')"')
+    expect(output).not.toContain('タブ&lt;&quot;quoted&quot;&gt; tab')
   })
 
   it('inserts color values into style attributes without modification', () => {

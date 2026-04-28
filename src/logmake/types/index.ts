@@ -172,6 +172,7 @@ export interface OutputSpeakerEntry {
 export interface OutputSection {
   tabName: string
   tabColor: string
+  /** 出力 HTML 内のタブ表示切替に使う安全な CSS class */
   tabVisibilityClass: string
   entries: OutputSpeakerEntry[]
 }
@@ -180,6 +181,10 @@ export interface OutputSection {
 export interface OutputToggle {
   name: string
   color: string
+  /** label/input の紐付けに使う安全な DOM id */
+  inputId: string
+  /** 表示切替対象を探すための安全な CSS class */
+  tabVisibilityClass: string
 }
 
 /**

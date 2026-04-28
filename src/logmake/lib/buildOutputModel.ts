@@ -19,9 +19,18 @@ export function buildOutputModel(
   options: BuildOutputOptions
 ): OutputModel {
   const sections: OutputSection[] = []
+  const tabVisibilityClasses = createTabVisibilityClasses(options.tabs)
   const toggles = Object.values(options.tabs)
     .filter((tab) => !isPrimaryTab(tab.name) && tab.visible)
-    .map((tab) => ({ name: tab.name, color: tab.color }))
+    .map((tab) => {
+      const tabClass = tabVisibilityClasses[tab.name]
+      return {
+        name: tab.name,
+        color: tab.color,
+        inputId: `${tabClass}-toggle`,
+        tabVisibilityClass: tabClass,
+      }
+    })
 
   for (const entry of parsedLog.entries) {
     const tab = options.tabs[entry.tabName]
@@ -40,7 +49,7 @@ export function buildOutputModel(
       currentSection = {
         tabName: entry.tabName,
         tabColor: tab.color,
-        tabVisibilityClass: `${entry.tabName} tab`,
+        tabVisibilityClass: tabVisibilityClasses[entry.tabName] ?? '',
         entries: [],
       }
       sections.push(currentSection)
@@ -62,4 +71,22 @@ export function buildOutputModel(
   }
 
   return { sections, toggles }
+}
+
+function createTabVisibilityClasses(
+  tabs: Record<string, { name: string }>
+): Record<string, string> {
+  let index = 0
+  const classes: Record<string, string> = {}
+
+  for (const tab of Object.values(tabs)) {
+    if (isPrimaryTab(tab.name)) {
+      continue
+    }
+
+    classes[tab.name] = `logmake-tab-${index}`
+    index += 1
+  }
+
+  return classes
 }

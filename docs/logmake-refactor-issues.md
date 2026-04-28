@@ -9,22 +9,24 @@ React 移行版の完了済み項目、判断保留項目、今後の改善候�
 
 ## 完了済み
 
-| 項目                  | 内容                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| React 専用入口        | `logmake/index.html` と `src/logmake/main.tsx` を追加し、logmake ページを独立させた。                   |
-| Pure Function 化      | `parseLogHtml`, `analyzeGrowth`, `buildOutputModel`, `buildOutputHtml` を `src/logmake/lib/` に分離した。 |
-| UI 分割               | `FileUpload`, `GrowthCheck`, `DisplaySample`, `Graph`, `OutputSettings` などへ分けた。                  |
-| OutputModel 化        | プレビュー用ではなく、出力 HTML 生成用の中間モデルとして整理した。                                      |
-| 表示形式サンプル      | 整形結果プレビューを廃止し、旧画面どおりの静的サンプルへ戻した。                                        |
-| box5 幅修正           | `.page` の最大幅制限を外し、旧実装の余白感に寄せた。                                                    |
-| 成長ダイス切替バグ    | event の値を state updater 外で退避し、表示切替時のクラッシュを防いだ。                                 |
-| downloadFile 切り出し | Blob ダウンロードの DOM 操作を `lib/utils/downloadFile.ts` に分離した。                                 |
-| テスト追加            | unit test と Playwright E2E で解析、出力、表示切替、ダウンロードを確認するようにした。                  |
-| DOMParser 化          | fixture を追加し、`parseLogHtml()` を `<p>` と直下 `span` を読む DOMParser ベースへ移行した。           |
-| BCDice fixture 拡充   | おみくじ、繰り返しダイス、初期値成功、クリティカル、ファンブル、`RESB`, `CBR`, 故障判定を追加した。    |
-| 成長判定拡張          | `CBR` / `CBRB` と故障判定も、技能名を取れる場合は成長判定欄へ出すようにした。                         |
-| 初期値 JSON 辞書化    | 初期値 JSON 自体を技能名と初期値の辞書にし、技能名と判定値のペアで判定するようにした。                |
-| system adapter 化     | system ごとの公開窓口、ダイス抽出、成長判定を分け、初期技能値も adapter から取得するようにした。       |
+| 項目                  | 内容                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| React 専用入口        | `logmake/index.html` と `src/logmake/main.tsx` を追加し、logmake ページを独立させた。                       |
+| Pure Function 化      | `parseLogHtml`, `analyzeGrowth`, `buildOutputModel`, `buildOutputHtml` を `src/logmake/lib/` に分離した。   |
+| UI 分割               | `FileUpload`, `GrowthCheck`, `DisplaySample`, `Graph`, `OutputSettings` などへ分けた。                      |
+| OutputModel 化        | プレビュー用ではなく、出力 HTML 生成用の中間モデルとして整理した。                                          |
+| 表示形式サンプル      | 整形結果プレビューを廃止し、旧画面どおりの静的サンプルへ戻した。                                            |
+| box5 幅修正           | `.page` の最大幅制限を外し、旧実装の余白感に寄せた。                                                        |
+| 成長ダイス切替バグ    | event の値を state updater 外で退避し、表示切替時のクラッシュを防いだ。                                     |
+| downloadFile 切り出し | Blob ダウンロードの DOM 操作を `lib/utils/downloadFile.ts` に分離した。                                     |
+| テスト追加            | unit test と Playwright E2E で解析、出力、表示切替、ダウンロードを確認するようにした。                      |
+| DOMParser 化          | fixture を追加し、`parseLogHtml()` を `<p>` と直下 `span` を読む DOMParser ベースへ移行した。               |
+| BCDice fixture 拡充   | おみくじ、繰り返しダイス、初期値成功、クリティカル、ファンブル、`RESB`, `CBR`, 故障判定を追加した。         |
+| 成長判定拡張          | `CBR` / `CBRB` と故障判定も、技能名を取れる場合は成長判定欄へ出すようにした。                               |
+| 初期値 JSON 辞書化    | 初期値 JSON 自体を技能名と初期値の辞書にし、技能名と判定値のペアで判定するようにした。                      |
+| system adapter 化     | system ごとの公開窓口、ダイス抽出、成長判定を分け、初期技能値も adapter から取得するようにした。            |
+| OutputModel 安全化    | タブ表示名と出力 HTML 内の `id` / `class` を分け、特殊文字を含むタブ名でも表示切替が壊れないようにした。    |
+| 純粋関数テスト補強    | `buildOutputModel` と `buildGrowthSummaryText` の直接テストを追加し、出力境界と成長サマリー整形を固定した。 |
 
 ## 保留した判断
 
@@ -65,9 +67,9 @@ React 移行版の完了済み項目、判断保留項目、今後の改善候�
 - 技能名 tail に HTML タグや全角スペースが混じる実ログ
 - CoC 6版 / 7版それぞれの実ログ由来パターン
 
-### 2. dice event と system 別 analyzer の分離
+### 2. 新 system 追加時の adapter 境界維持
 
-本文 token のダイス情報は `DiceEvent` に寄せ、CoC の D100 成長判定は system adapter の `growth` に分離済み。
+本文 token のダイス情報は `DiceEvent` に寄せ、CoC の D100 成長判定は system adapter の `growth` に分離済み。これは新しい未実装タスクではなく、エモクロアなどを足すときに維持する境界として扱う。
 
 エモクロア対応へ進むときは、次の分離を維持する。
 
@@ -83,6 +85,7 @@ EmokloreAnalysis
 - parser はログ本文と BCDice の結果行を読むだけにする。
 - 成長判定は system ごとの growth に閉じる。
 - エモクロア固有の判定を追加しても、出力 HTML 生成や CoC 成長判定を壊しにくくする。
+- system 追加時は、UI や `lib/` に system 分岐を増やす前に adapter 側の責務で表現できないか確認する。
 
 ### 3. 縦書き HTML / PDF 出力の設計
 
@@ -122,12 +125,22 @@ entries は tabId / characterId を参照
 
 ## 直近の確認コマンド
 
+軽量確認:
+
 ```bash
-pnpm lint
 pnpm test:unit
-pnpm test:e2e
-pnpm build
+pnpm lint
 ```
+
+最終確認:
+
+```bash
+pnpm build
+pnpm test:e2e
+git diff --check
+```
+
+出力 HTML 周りを触った場合は、unit test で `buildOutputModel` / `buildOutputHtml` の内容を確認し、必要に応じて E2E でもダウンロード内容を確認する。
 
 ## main への PR 前チェック
 

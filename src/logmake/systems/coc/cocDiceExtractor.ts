@@ -28,9 +28,25 @@ interface ParsedCocDiceResult {
 
 const SKILL_SEPARATOR_REGEX = /[,，、]/
 const BRACKET_ONLY_SKILL_REGEX = /^【([^】]+)】$/
-/** SAN・能力値ロールなど、成長判定から除外する特殊ステータス用正規表現 */
-const STATUS_REGEX =
-  /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/
+/** SAN・能力値ロールなど、成長判定表示で切り分けたい特殊ステータス名 */
+const STATUS_TARGET_NAMES = new Set([
+  'SAN',
+  'SAN値チェック',
+  '正気度',
+  '正気度ロール',
+  'STR',
+  'CON',
+  'POW',
+  'DEX',
+  'APP',
+  'SIZ',
+  'INT',
+  'EDU',
+  'アイデア',
+  '幸運',
+  'ショックロール',
+  '知識',
+])
 
 /**
  * CoC 汎用のダイスイベント抽出関数を生成するファクトリ。
@@ -41,18 +57,28 @@ const STATUS_REGEX =
  * @returns ログフラグメント文字列を受け取り DiceEvent を返す抽出関数
  */
 export function createCocDiceExtractor(
-  config: CocDiceExtractorConfig,
+  config: CocDiceExtractorConfig
 ): (fragment: string) => DiceEvent | undefined {
   const d100ResultRegex = createD100ResultRegex(config.commandPrefix)
   const commandResultRegex = createCommandResultRegex(config.commandPrefix)
 
   return function parseCocDiceToken(fragment: string): DiceEvent | undefined {
-    const result = parseDiceResult(fragment, d100ResultRegex, commandResultRegex)
+    const result = parseDiceResult(
+      fragment,
+      d100ResultRegex,
+      commandResultRegex
+    )
     if (!result) {
       return undefined
     }
 
     const cocOption = fragment.match(config.optionRegex)?.[1] ?? ''
+    const targets = parseDiceTargets(
+      result.command,
+      result.tail,
+      result.partOutcomes,
+      config
+    )
 
     return {
       rawText: fragment,
@@ -60,13 +86,8 @@ export function createCocDiceExtractor(
       outcomeText: result.outcomeText,
       primaryRoll: result.roll,
       rolls: [result.roll],
-      targets: parseDiceTargets(
-        result.command,
-        result.tail,
-        result.partOutcomes,
-        config,
-      ),
-      status: STATUS_REGEX.test(fragment),
+      targets,
+      status: targets.some((target) => isStatusTargetName(target.name)),
       highlight: classifyCocHighlight(result.outcomeText),
       meta: cocOption ? { cocOption } : undefined,
     }
@@ -84,12 +105,17 @@ export function createCocDiceExtractor(
 function parseDiceResult(
   fragment: string,
   d100ResultRegex: RegExp,
-  commandResultRegex: RegExp,
+  commandResultRegex: RegExp
 ): ParsedCocDiceResult | undefined {
   const d100Match = fragment.match(d100ResultRegex)
   if (d100Match?.groups) {
     const { roll, outcome, command, tail } = d100Match.groups
-    if (roll === undefined || outcome === undefined || command === undefined || tail === undefined) {
+    if (
+      roll === undefined ||
+      outcome === undefined ||
+      command === undefined ||
+      tail === undefined
+    ) {
       return undefined
     }
     return {
@@ -104,7 +130,12 @@ function parseDiceResult(
   const commandMatch = fragment.match(commandResultRegex)
   if (commandMatch?.groups) {
     const { roll, outcome, command, tail } = commandMatch.groups
-    if (roll === undefined || outcome === undefined || command === undefined || tail === undefined) {
+    if (
+      roll === undefined ||
+      outcome === undefined ||
+      command === undefined ||
+      tail === undefined
+    ) {
       return undefined
     }
     return {
@@ -133,18 +164,24 @@ function parseDiceTargets(
   command: string,
   rawTail: string,
   partOutcomes: string[],
-  config: CocDiceExtractorConfig,
+  config: CocDiceExtractorConfig
 ): DiceEventTarget[] {
   const tail = cleanSkillTail(rawTail)
   if (!tail) {
     return []
   }
 
-  const commandTargets = parseCommandTargets(command, config.combineCommandPattern)
+  const commandTargets = parseCommandTargets(
+    command,
+    config.combineCommandPattern
+  )
   const bracketOnlyMatch = tail.match(BRACKET_ONLY_SKILL_REGEX)
 
   if (bracketOnlyMatch) {
-    const name = canonicalizeTargetName(bracketOnlyMatch[1], config.skillAliases)
+    const name = canonicalizeTargetName(
+      bracketOnlyMatch[1],
+      config.skillAliases
+    )
     return [createDiceEventTarget(name, commandTargets[0])]
   }
 
@@ -156,7 +193,7 @@ function parseDiceTargets(
 
     if (parts.length === commandTargets.length) {
       return parts.map((name, index) =>
-        createDiceEventTarget(name, commandTargets[index], partOutcomes[index]),
+        createDiceEventTarget(name, commandTargets[index], partOutcomes[index])
       )
     }
 
@@ -167,7 +204,12 @@ function parseDiceTargets(
     return [{ name: tail, judge: null }]
   }
 
-  return [createDiceEventTarget(canonicalizeTargetName(tail, config.skillAliases), commandTargets[0])]
+  return [
+    createDiceEventTarget(
+      canonicalizeTargetName(tail, config.skillAliases),
+      commandTargets[0]
+    ),
+  ]
 }
 
 /**
@@ -178,7 +220,10 @@ function parseDiceTargets(
  * @param combinePattern - コンバインコマンドを検出する正規表現
  * @returns 目標値の配列（目標値なしの場合は空配列）
  */
-function parseCommandTargets(command: string, combinePattern: RegExp): number[] {
+function parseCommandTargets(
+  command: string,
+  combinePattern: RegExp
+): number[] {
   const combineMatch = command.match(combinePattern)
   if (combineMatch) {
     return [Number(combineMatch[1]), Number(combineMatch[2])]
@@ -195,10 +240,17 @@ function parseCommandTargets(command: string, combinePattern: RegExp): number[] 
  * @param aliases - 技能エイリアスマップ
  * @returns 正規化後の技能名
  */
-function normalizeSkillPart(part: string, aliases: Record<string, string>): string {
+function normalizeSkillPart(
+  part: string,
+  aliases: Record<string, string>
+): string {
   const trimmed = part.trim()
   const bracketOnlyMatch = trimmed.match(BRACKET_ONLY_SKILL_REGEX)
   return canonicalizeTargetName(bracketOnlyMatch?.[1] ?? trimmed, aliases)
+}
+
+function isStatusTargetName(targetName: string): boolean {
+  return STATUS_TARGET_NAMES.has(targetName.replace(/\s+/g, '').toUpperCase())
 }
 
 /**
@@ -217,7 +269,7 @@ function createD100ResultRegex(commandPrefix: string): RegExp {
       '(?: ボーナス・ペナルティダイス\\[-?\\d+\\] ＞ [\\d,\\s]+)?',
       ' ＞ (?<roll>\\d+) ＞ (?<outcome>.*)$',
     ].join(''),
-    'i',
+    'i'
   )
 }
 
@@ -237,7 +289,7 @@ function createCommandResultRegex(commandPrefix: string): RegExp {
       '(?:\\[(?<parts>[^\\]]+)\\])?',
       '\\s*＞\\s*(?<outcome>.*)$',
     ].join(''),
-    'i',
+    'i'
   )
 }
 

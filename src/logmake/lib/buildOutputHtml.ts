@@ -1,4 +1,8 @@
-import { FAILURE_HIGHLIGHT, SUCCESS_HIGHLIGHT, isPrimaryTab } from '@/logmake/lib/defaults'
+import {
+  FAILURE_HIGHLIGHT,
+  SUCCESS_HIGHLIGHT,
+  isPrimaryTab,
+} from '@/logmake/lib/defaults'
 import type {
   ContentParagraph,
   ContentToken,
@@ -23,12 +27,12 @@ export function buildOutputHtml(
   const viewCheck = outputModel.toggles
     .map(
       (tab) => `
-                <label for="${escapeAttribute(tab.name)}">
+                <label for="${tab.inputId}">
                     <input
                         type="checkbox"
-                        id="${escapeAttribute(tab.name)}"
+                        id="${tab.inputId}"
                         checked="checked"
-                        onchange="c_disp(this, '${escapeAttribute(`${tab.name} tab`)}')"
+                        onchange="c_disp(this, '${tab.tabVisibilityClass}')"
                         style="accent-color: ${tab.color};"
                     />
                     <span>${escapeText(tab.name)}</span>
@@ -296,15 +300,4 @@ function escapeText(text: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
-}
-
-/**
- * HTML 属性値に埋め込む文字列をエスケープする。
- * escapeText と同一のエスケープルールを適用する。
- *
- * @param text - エスケープ対象の文字列
- * @returns HTML エスケープ済み文字列
- */
-function escapeAttribute(text: string): string {
-  return escapeText(text)
 }

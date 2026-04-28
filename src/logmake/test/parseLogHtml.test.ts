@@ -12,7 +12,10 @@ const COC7_SYSTEM = getLogmakeSystem('CoC7')
 
 describe('parseLogHtml', () => {
   it('parses entries, tabs, characters, and expands x-roll lines', () => {
-    const html = readFileSync(path.join(FIXTURE_DIR, 'coc6-sample.html'), 'utf8')
+    const html = readFileSync(
+      path.join(FIXTURE_DIR, 'coc6-sample.html'),
+      'utf8'
+    )
     const parsed = parseLogHtml(html, COC6_SYSTEM)
 
     expect(parsed.entries).toHaveLength(3)
@@ -20,9 +23,9 @@ describe('parseLogHtml', () => {
     expect(parsed.characters['探索者A']?.style).toBe('character')
     expect(parsed.characters['古文書']?.style).toBe('item')
     expect(parsed.entries[1].paragraphs[0].tokens).toHaveLength(3)
-    expect(parsed.entries[1].paragraphs[0].tokens[1].dice?.targets[0]?.name).toBe(
-      '目星'
-    )
+    expect(
+      parsed.entries[1].paragraphs[0].tokens[1].dice?.targets[0]?.name
+    ).toBe('目星')
     expect(parsed.warnings).toHaveLength(0)
   })
 
@@ -40,16 +43,19 @@ describe('parseLogHtml', () => {
       charColor: '#123abc',
     })
     expect(parsed.entries[0].paragraphs).toHaveLength(2)
-    expect(parsed.entries[0].paragraphs[0].tokens[0].dice?.targets[0]?.name).toBe(
-      '目星'
-    )
+    expect(
+      parsed.entries[0].paragraphs[0].tokens[0].dice?.targets[0]?.name
+    ).toBe('目星')
     expect(parsed.entries[1].sourceHtml).toContain('<span>差出人不明</span>')
     expect(parsed.characters['手紙']?.style).toBe('item')
     expect(parsed.warnings).toHaveLength(0)
   })
 
   it('parses CoC7 bonus dice results', () => {
-    const html = readFileSync(path.join(FIXTURE_DIR, 'coc7-sample.html'), 'utf8')
+    const html = readFileSync(
+      path.join(FIXTURE_DIR, 'coc7-sample.html'),
+      'utf8'
+    )
     const parsed = parseLogHtml(html, COC7_SYSTEM)
 
     expect(parsed.entries).toHaveLength(1)
@@ -97,9 +103,9 @@ describe('parseLogHtml', () => {
     )
 
     expect(parsed.entries).toHaveLength(9)
-    expect(commandEntries.every(
-      (entry) => entry.paragraphs[0].tokens.length === 1
-    )).toBe(true)
+    expect(
+      commandEntries.every((entry) => entry.paragraphs[0].tokens.length === 1)
+    ).toBe(true)
     expect(repeatedTokens).toHaveLength(4)
     expect(repeatedTokens[1].dice).toMatchObject({
       command: 'CCB&lt;=25',
@@ -165,7 +171,10 @@ describe('parseLogHtml', () => {
   })
 
   it('keeps omikuji as text-only content', () => {
-    const html = readFileSync(path.join(FIXTURE_DIR, 'coc6-omikuji.html'), 'utf8')
+    const html = readFileSync(
+      path.join(FIXTURE_DIR, 'coc6-omikuji.html'),
+      'utf8'
+    )
     const parsed = parseLogHtml(html, COC6_SYSTEM)
     const tokens = parsed.entries[0].paragraphs[0].tokens
 
@@ -300,5 +309,35 @@ describe('parseLogHtml', () => {
         expect(Number.isNaN(dice.primaryRoll)).toBe(false)
       }
     }
+  })
+
+  it('marks only exact status target names as status-dependent records', () => {
+    const html = `
+      <!DOCTYPE html>
+      <html lang="ja">
+        <body>
+          <p style="color:#3366cc;">
+            <span>[main]</span><span>探索者A</span> :
+            <span>CCB&lt;=60 【図書館】 (1D100&lt;=60) ＞ 30 ＞ 成功 知識の断片</span>
+          </p>
+          <p style="color:#3366cc;">
+            <span>[main]</span><span>探索者A</span> :
+            <span>CCB&lt;=60 【POW】 (1D100&lt;=60) ＞ 30 ＞ 成功</span>
+          </p>
+        </body>
+      </html>
+    `
+    const dice = parseLogHtml(html, COC6_SYSTEM).entries.map(
+      (entry) => entry.paragraphs[0].tokens[0].dice
+    )
+
+    expect(dice[0]).toMatchObject({
+      targets: [{ name: '図書館' }],
+      status: false,
+    })
+    expect(dice[1]).toMatchObject({
+      targets: [{ name: 'POW' }],
+      status: true,
+    })
   })
 })
