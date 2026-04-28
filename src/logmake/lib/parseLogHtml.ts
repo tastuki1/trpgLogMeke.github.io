@@ -2,31 +2,26 @@ import {
   createBaseTabs,
   createTabConfig,
   getTabDisplayName,
-  STATUS_REGEX,
 } from '@/logmake/lib/defaults'
-import { normalizeLogSource } from '@/logmake/lib/normalizeSourceHtml'
+import type { LogmakeSystem } from '@/logmake/systems'
 import type {
   CharacterConfig,
   ContentParagraph,
   ContentToken,
-  GameSystem,
-  ParsedDiceOccurrence,
   ParsedLog,
 } from '@/logmake/types'
 
-const ENTRY_REGEX =
-  /<p style="color:(#[0-9a-fA-F]{6});">\s*<span>\s*\[(.+?)\]<\/span>\s*<span>(.*?)<\/span>\s*:\s*<span>\s*([\s\S]*?)\s*<\/span>\s*<\/p>/g
+const BR_TAG_REGEX = /<br\s*\/?>/i
+const COLOR_STYLE_REGEX = /(?:^|;)\s*color\s*:\s*(#[0-9a-fA-F]{6})\s*(?:;|$)/
 
-const DICE_REGEX =
-  /\(1D100&lt;=\d+\)(?: ボーナス・ペナルティダイス\[-?\d+\] ＞ [\d,\s]+)? ＞ (\d+) ＞ (.*)/
+interface RawLogEntry {
+  color: string
+  rawTabName: string
+  charName: string
+  rawContent: string
+}
 
-const OPTION_REGEX =
-  /(?:CCB|CC|RESB|RES|CBR)[-+0-9()]*&lt;=\d+([crhe])/i
-
-const JUDGE_REGEX = /&lt;=\d+[crhe]* 【[^】]+】/
-const SKILL_REGEX = /【([^】]+)】/
-
-export function parseLogHtml(rawHtml: string, system: GameSystem): ParsedLog {
+export function parseLogHtml(rawHtml: string, system: LogmakeSystem): ParsedLog {
   const tabs = createBaseTabs()
   const warnings: string[] = []
   const entries = []
@@ -34,13 +29,10 @@ export function parseLogHtml(rawHtml: string, system: GameSystem): ParsedLog {
   const characterSeenCount: Record<string, number> = {}
   const characterColors: Record<string, string> = {}
 
-  const matches = rawHtml.matchAll(ENTRY_REGEX)
-
-  for (const [index, match] of Array.from(matches).entries()) {
-    const [, color, rawTabName, rawCharName, rawContent] = match
+  for (const [index, entry] of readRawEntries(rawHtml).entries()) {
+    const { color, rawTabName, charName, rawContent } = entry
     const tabName = getTabDisplayName(rawTabName.trim())
-    const charName = rawCharName.trim()
-    const normalizedContent = normalizeLogSource(rawContent, system)
+    const normalizedContent = system.log.normalizeSource(rawContent)
 
     if (!tabs[tabName]) {
       tabs[tabName] = createTabConfig(tabName)
@@ -60,7 +52,7 @@ export function parseLogHtml(rawHtml: string, system: GameSystem): ParsedLog {
       charName,
       charColor: color,
       sourceHtml: normalizedContent,
-      paragraphs: parseParagraphs(normalizedContent, tabName, charName, system),
+      paragraphs: parseParagraphs(normalizedContent, system),
     })
   }
 
@@ -90,16 +82,60 @@ export function parseLogHtml(rawHtml: string, system: GameSystem): ParsedLog {
   }
 }
 
+function readRawEntries(rawHtml: string): RawLogEntry[] {
+  const document = new DOMParser().parseFromString(rawHtml, 'text/html')
+  const paragraphs = Array.from(document.querySelectorAll('p'))
+
+  return paragraphs
+    .map(readRawEntry)
+    .filter((entry): entry is RawLogEntry => entry !== null)
+}
+
+function readRawEntry(paragraph: HTMLParagraphElement): RawLogEntry | null {
+  const color = readSpeakerColor(paragraph)
+  const spans = Array.from(paragraph.children).filter(isSpanElement)
+
+  if (!color || spans.length < 3) {
+    return null
+  }
+
+  const rawTabName = readTabName(spans[0].textContent ?? '')
+  const charName = (spans[1].textContent ?? '').trim()
+  const rawContent = spans[2].innerHTML.trim()
+
+  if (!rawTabName || !charName || !rawContent) {
+    return null
+  }
+
+  return {
+    color,
+    rawTabName,
+    charName,
+    rawContent,
+  }
+}
+
+function isSpanElement(element: Element): element is HTMLSpanElement {
+  return element.tagName.toLowerCase() === 'span'
+}
+
+function readSpeakerColor(paragraph: HTMLParagraphElement): string | null {
+  return paragraph.getAttribute('style')?.match(COLOR_STYLE_REGEX)?.[1] ?? null
+}
+
+function readTabName(tabLabel: string): string {
+  const trimmed = tabLabel.trim()
+  return (trimmed.match(/^\[(.*)\]$/s)?.[1] ?? trimmed).trim()
+}
+
 function parseParagraphs(
   content: string,
-  tabName: string,
-  charName: string,
-  system: GameSystem,
+  system: LogmakeSystem,
 ): ContentParagraph[] {
   const paragraphs: ContentParagraph[] = []
   let currentTokens: ContentToken[] = []
 
-  for (const fragment of content.split('<br>')) {
+  for (const fragment of content.split(BR_TAG_REGEX)) {
     if (fragment.trim() === '') {
       if (currentTokens.length > 0) {
         paragraphs.push({ tokens: currentTokens })
@@ -108,9 +144,10 @@ function parseParagraphs(
       continue
     }
 
+    const dice = system.log.parseToken(fragment)
     currentTokens.push({
       content: fragment,
-      ...(parseDiceOccurrence(fragment, tabName, charName, system) ?? {}),
+      ...(dice ? { dice, highlight: dice.highlight } : {}),
     })
   }
 
@@ -119,61 +156,4 @@ function parseParagraphs(
   }
 
   return paragraphs
-}
-
-function parseDiceOccurrence(
-  fragment: string,
-  _tabName: string,
-  _charName: string,
-  _system: GameSystem,
-): Pick<ContentToken, 'dice' | 'highlight'> | undefined {
-  const match = fragment.match(DICE_REGEX)
-  if (!match) {
-    return undefined
-  }
-
-  const dice: ParsedDiceOccurrence = {
-    rawText: fragment,
-    roll: Number(match[1]),
-    skill: fragment.match(SKILL_REGEX)?.[1] ?? '',
-    judge: normalizeJudge(fragment.match(JUDGE_REGEX)?.[0] ?? null),
-    option: fragment.match(OPTION_REGEX)?.[1] ?? '',
-    outcomeText: match[2],
-    status: STATUS_REGEX.test(fragment),
-    highlight: classifyHighlight(match[2]),
-  }
-
-  return {
-    dice: {
-      ...dice,
-      rawText: fragment,
-      skill: dice.skill,
-      status: dice.status,
-    },
-    highlight: dice.highlight,
-  }
-}
-
-function classifyHighlight(outcomeText: string) {
-  if (
-    /クリティカル|決定的成功|スペシャル|イクストリーム成功|ハード成功|成功/.test(
-      outcomeText,
-    )
-  ) {
-    return 'success' as const
-  }
-
-  if (/失敗|ファンブル|致命的失敗/.test(outcomeText)) {
-    return 'failure' as const
-  }
-
-  return undefined
-}
-
-function normalizeJudge(judge: string | null): string | null {
-  if (!judge) {
-    return null
-  }
-
-  return judge.replace(/&lt;=(\d+)[crhe](?= 【)/i, '&lt;=$1')
 }
