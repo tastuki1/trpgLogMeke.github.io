@@ -1,4 +1,7 @@
+import { Fragment } from 'react'
+
 import formStyles from '@/logmake/styles/forms.module.css'
+import { selectableLogmakeSystems } from '@/logmake/systems'
 import type { GameSystem } from '@/logmake/types'
 
 interface FileUploadProps {
@@ -6,7 +9,7 @@ interface FileUploadProps {
   onSystemChange: (system: GameSystem) => void
   onFileSelect: (file: File) => void
   isLoading: boolean
-  defaultDiceLoading: boolean
+  defaultSkillValuesLoading: boolean
   sourceFileName: string | null
 }
 
@@ -15,30 +18,25 @@ export function FileUpload({
   onSystemChange,
   onFileSelect,
   isLoading,
-  defaultDiceLoading,
+  defaultSkillValuesLoading,
   sourceFileName,
 }: FileUploadProps) {
   return (
     <div className={formStyles.legacyBlock}>
       整形したいログを選択してください．
-      <input
-        aria-label="CoC 6版"
-        checked={system === 'CoC6'}
-        id="CoC6"
-        name="system"
-        type="radio"
-        onChange={() => onSystemChange('CoC6')}
-      />
-      <label htmlFor="CoC6">6版</label>
-      <input
-        aria-label="CoC 7版"
-        checked={system === 'CoC7'}
-        id="CoC7"
-        name="system"
-        type="radio"
-        onChange={() => onSystemChange('CoC7')}
-      />
-      <label htmlFor="CoC7">7版</label>
+      {selectableLogmakeSystems.map((logmakeSystem) => (
+        <Fragment key={logmakeSystem.id}>
+          <input
+            aria-label={logmakeSystem.name}
+            checked={system === logmakeSystem.id}
+            id={logmakeSystem.id}
+            name="system"
+            type="radio"
+            onChange={() => onSystemChange(logmakeSystem.id)}
+          />
+          <label htmlFor={logmakeSystem.id}>{logmakeSystem.name}</label>
+        </Fragment>
+      ))}
       <br />
       <br />
       <input
@@ -63,7 +61,7 @@ export function FileUpload({
       <p className={formStyles.metaLine}>
         {isLoading
           ? 'ファイルを読み込み中です。'
-          : defaultDiceLoading
+          : defaultSkillValuesLoading
             ? '初期技能データを更新中です。'
             : '準備完了。'}
       </p>

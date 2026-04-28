@@ -1,8 +1,8 @@
 import { startTransition, useEffect, useMemo, useState } from 'react'
 
-import { useDefaultDice } from '@/logmake/hooks/useDefaultDice'
+import { useDefaultSkillValues } from '@/logmake/hooks/useDefaultSkillValues'
 import { useFileReader } from '@/logmake/hooks/useFileReader'
-import { analyzeDice } from '@/logmake/lib/analyzeDice'
+import { analyzeGrowth } from '@/logmake/lib/analyzeGrowth'
 import { buildOutputHtml } from '@/logmake/lib/buildOutputHtml'
 import { buildOutputModel } from '@/logmake/lib/buildOutputModel'
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/logmake/lib/defaults'
 import { parseLogHtml } from '@/logmake/lib/parseLogHtml'
 import { downloadFile } from '@/logmake/lib/utils/downloadFile'
+import { getLogmakeSystem } from '@/logmake/systems'
 import type {
   CharacterConfig,
   CharacterStyle,
@@ -48,23 +49,24 @@ export function useLogmakePageState() {
     useState('整形したいログを選択してください。')
 
   const fileReader = useFileReader()
-  const defaultDice = useDefaultDice(system)
+  const selectedSystem = useMemo(() => getLogmakeSystem(system), [system])
+  const defaultSkillValues = useDefaultSkillValues(selectedSystem)
 
   const parsedLog = useMemo(() => {
     if (!source.rawHtml) {
       return null
     }
 
-    return parseLogHtml(source.rawHtml, system)
-  }, [source.rawHtml, system])
+    return parseLogHtml(source.rawHtml, selectedSystem)
+  }, [selectedSystem, source.rawHtml])
 
   const analysis = useMemo(() => {
     if (!parsedLog) {
       return null
     }
 
-    return analyzeDice(parsedLog, system, defaultDice.data)
-  }, [defaultDice.data, parsedLog, system])
+    return analyzeGrowth(parsedLog, selectedSystem, defaultSkillValues.data)
+  }, [defaultSkillValues.data, parsedLog, selectedSystem])
 
   const outputModel = useMemo(() => {
     if (!parsedLog) {
@@ -81,7 +83,7 @@ export function useLogmakePageState() {
     () =>
       [
         fileReader.error,
-        defaultDice.error,
+        defaultSkillValues.error,
         ...new Set([
           ...(parsedLog?.warnings ?? []),
           ...(analysis?.warnings ?? []),
@@ -89,7 +91,7 @@ export function useLogmakePageState() {
       ].filter(Boolean) as string[],
     [
       analysis?.warnings,
-      defaultDice.error,
+      defaultSkillValues.error,
       fileReader.error,
       parsedLog?.warnings,
     ]
@@ -134,11 +136,12 @@ export function useLogmakePageState() {
   }
 
   function handleSystemChange(nextSystem: GameSystem) {
+    const nextProfile = getLogmakeSystem(nextSystem)
     setSystem(nextSystem)
     setStatusMessage(
       source.rawHtml
-        ? `${nextSystem} 向けに再解析しています。`
-        : `${nextSystem} 向けの正規表現と初期技能定義へ切り替えました。`
+        ? `${nextProfile.name} 向けに再解析しています。`
+        : `${nextProfile.name} 向けの正規表現と初期技能定義へ切り替えました。`
     )
   }
 
@@ -249,7 +252,7 @@ export function useLogmakePageState() {
     },
     loading: {
       file: fileReader.isLoading,
-      defaultDice: defaultDice.isLoading,
+      defaultSkillValues: defaultSkillValues.isLoading,
     },
     actions: {
       handleFileSelect,

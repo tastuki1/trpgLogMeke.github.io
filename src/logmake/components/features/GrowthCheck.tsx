@@ -5,7 +5,6 @@ import { buildGrowthSummaryText } from '@/logmake/lib/buildGrowthSummaryText'
 import { useClipboard } from '@/logmake/hooks/useClipboard'
 import formStyles from '@/logmake/styles/forms.module.css'
 import type {
-  GameSystem,
   GrowthAnalysis,
   GrowthFilters,
   TabConfig,
@@ -13,13 +12,12 @@ import type {
 
 interface GrowthCheckProps {
   analysis: GrowthAnalysis | null
-  system: GameSystem
   tabs: Record<string, TabConfig>
 }
 
-export function GrowthCheck({ analysis, system, tabs }: GrowthCheckProps) {
+export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
   const [filters, setFilters] = useState<GrowthFilters>(() =>
-    createGrowthFilters(system)
+    createGrowthFilters([])
   )
   const [visibleTabs, setVisibleTabs] = useState<Record<string, boolean>>(() =>
     createVisibleTabs(tabs)
@@ -28,8 +26,8 @@ export function GrowthCheck({ analysis, system, tabs }: GrowthCheckProps) {
   const clipboard = useClipboard()
 
   useEffect(() => {
-    setFilters((current) => createGrowthFilters(system, current))
-  }, [system])
+    setFilters((current) => createGrowthFilters(analysis?.labels ?? [], current))
+  }, [analysis?.labels])
 
   useEffect(() => {
     setVisibleTabs((current) => syncVisibleTabs(current, tabs))

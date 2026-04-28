@@ -22,7 +22,7 @@ function App() {
 
       <div className={styles.box5}>
         <FileUpload
-          defaultDiceLoading={loading.defaultDice}
+          defaultSkillValuesLoading={loading.defaultSkillValues}
           isLoading={loading.file}
           sourceFileName={source.fileName}
           system={system}
@@ -43,7 +43,7 @@ function App() {
           </section>
         ) : null}
 
-        <GrowthCheck analysis={derived.analysis} system={system} tabs={tabs} />
+        <GrowthCheck analysis={derived.analysis} tabs={tabs} />
 
         <DisplaySample />
 
