@@ -1,5 +1,6 @@
 import formStyles from '@/logmake/styles/forms.module.css'
 
+/** character / item / scene の表示スタイルサンプルを表示するコンポーネント */
 export function DisplaySample() {
   return (
     <details className={formStyles.detailsBlock}>

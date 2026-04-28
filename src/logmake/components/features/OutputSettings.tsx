@@ -25,6 +25,20 @@ interface OutputSettingsProps {
   onTabVisibilityChange: (name: string, visible: boolean) => void
 }
 
+/**
+ * 基本設定・タブ設定・キャラクター設定・ダウンロードを束ねるコンポーネント。
+ *
+ * @param props.canDownload - ダウンロード可能状態か否か
+ * @param props.characters - キャラクター設定のレコード
+ * @param props.settings - 現在の整形設定
+ * @param props.tabs - タブ設定のレコード
+ * @param props.onCharacterColorChange - キャラクターカラー変更ハンドラ
+ * @param props.onCharacterStyleChange - キャラクタースタイル変更ハンドラ
+ * @param props.onDownload - ダウンロードハンドラ
+ * @param props.onSettingChange - 基本設定変更ハンドラ
+ * @param props.onTabColorChange - タブカラー変更ハンドラ
+ * @param props.onTabVisibilityChange - タブ表示切り替えハンドラ
+ */
 export function OutputSettings({
   canDownload,
   characters,

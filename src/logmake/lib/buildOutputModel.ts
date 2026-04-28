@@ -6,6 +6,14 @@ import type {
   ParsedLog,
 } from '@/logmake/types'
 
+/**
+ * パース済みログと表示設定から HTML 出力用の中間データモデルを構築する。
+ * 非表示タブのエントリは除外し、連続する同一タブ・同一キャラクターをまとめる。
+ *
+ * @param parsedLog - parseLogHtml の戻り値
+ * @param options - タブ・キャラクターの表示設定
+ * @returns HTML 出力用データモデル
+ */
 export function buildOutputModel(
   parsedLog: ParsedLog,
   options: BuildOutputOptions

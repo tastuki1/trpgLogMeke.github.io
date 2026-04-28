@@ -13,6 +13,16 @@ interface FileUploadProps {
   sourceFileName: string | null
 }
 
+/**
+ * ゲームシステム選択とログファイルアップロードのコンポーネント。
+ *
+ * @param props.system - 現在選択中のゲームシステム
+ * @param props.onSystemChange - システム変更ハンドラ
+ * @param props.onFileSelect - ファイル選択ハンドラ
+ * @param props.isLoading - ファイル読み込み中フラグ
+ * @param props.defaultSkillValuesLoading - 初期技能値読み込み中フラグ
+ * @param props.sourceFileName - 読み込み済みファイル名（未選択時は null）
+ */
 export function FileUpload({
   system,
   onSystemChange,

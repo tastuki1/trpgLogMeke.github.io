@@ -19,6 +19,13 @@ interface GraphProps {
   characters: Record<string, CharacterConfig>
 }
 
+/**
+ * ダイス値の分布をバーグラフで表示するコンポーネント。
+ * analysis が null またはレコードがない場合は null を返す。
+ *
+ * @param props.analysis - 成長判定の分析結果
+ * @param props.characters - キャラクターカラーの参照に使用するレコード
+ */
 export function Graph({ analysis, characters }: GraphProps) {
   if (!analysis || analysis.records.length === 0) {
     return null

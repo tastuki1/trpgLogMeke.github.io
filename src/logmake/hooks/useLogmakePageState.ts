@@ -27,11 +27,18 @@ const EMPTY_OUTPUT: OutputModel = {
   toggles: [],
 }
 
+/** useLogmakePageState 内部のソースファイル状態 */
 interface SourceState {
   rawHtml: string
   fileName: string | null
 }
 
+/**
+ * ログ整形ページ全体の状態・派生値・ローディング状態・アクションを管理するカスタムフック。
+ * ファイル読み込み→解析→成長判定→出力 HTML 生成の一連の処理を統合する。
+ *
+ * @returns state・derived・loading・actions を持つオブジェクト
+ */
 export function useLogmakePageState() {
   const [system, setSystem] = useState<GameSystem>('CoC6')
   const [source, setSource] = useState<SourceState>({
@@ -113,6 +120,11 @@ export function useLogmakePageState() {
     )
   }, [parsedLog, source.rawHtml])
 
+  /**
+   * ファイル選択時にテキストを読み込み、ソース状態と設定を更新する。
+   *
+   * @param file - アップロードされた File オブジェクト
+   */
   async function handleFileSelect(file: File) {
     try {
       const text = await fileReader.readText(file)
@@ -135,6 +147,11 @@ export function useLogmakePageState() {
     }
   }
 
+  /**
+   * ゲームシステムを切り替え、ステータスメッセージを更新する。
+   *
+   * @param nextSystem - 切り替え先のゲームシステム識別子
+   */
   function handleSystemChange(nextSystem: GameSystem) {
     const nextProfile = getLogmakeSystem(nextSystem)
     setSystem(nextSystem)
@@ -145,6 +162,12 @@ export function useLogmakePageState() {
     )
   }
 
+  /**
+   * ログ整形設定の単一フィールドを更新する。
+   *
+   * @param key - 更新する設定キー
+   * @param value - 新しい値
+   */
   function handleSettingChange<Key extends keyof LogmakeSettings>(
     key: Key,
     value: LogmakeSettings[Key]
@@ -155,6 +178,12 @@ export function useLogmakePageState() {
     }))
   }
 
+  /**
+   * 指定したタブの表示・非表示を切り替える。
+   *
+   * @param name - タブ名
+   * @param visible - 表示する場合は true
+   */
   function handleTabVisibilityChange(name: string, visible: boolean) {
     setTabs((current) => {
       const tab = current[name]
@@ -172,6 +201,12 @@ export function useLogmakePageState() {
     })
   }
 
+  /**
+   * 指定したタブのカラーを変更する。
+   *
+   * @param name - タブ名
+   * @param color - 新しいカラーコード
+   */
   function handleTabColorChange(name: string, color: string) {
     setTabs((current) => {
       const tab = current[name]
@@ -189,6 +224,12 @@ export function useLogmakePageState() {
     })
   }
 
+  /**
+   * 指定したキャラクターの表示スタイルを変更する。
+   *
+   * @param name - キャラクター名
+   * @param style - 新しい表示スタイル
+   */
   function handleCharacterStyleChange(name: string, style: CharacterStyle) {
     setCharacters((current) => {
       const character = current[name]
@@ -206,6 +247,12 @@ export function useLogmakePageState() {
     })
   }
 
+  /**
+   * 指定したキャラクターのカラーを変更する。
+   *
+   * @param name - キャラクター名
+   * @param color - 新しいカラーコード
+   */
   function handleCharacterColorChange(name: string, color: string) {
     setCharacters((current) => {
       const character = current[name]
@@ -223,6 +270,7 @@ export function useLogmakePageState() {
     })
   }
 
+  /** 現在の出力モデルを HTML ファイルとしてダウンロードする */
   function handleDownload() {
     if (outputModel.sections.length === 0) {
       setStatusMessage('ダウンロードできる内容がまだありません。')

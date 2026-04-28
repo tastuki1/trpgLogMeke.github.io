@@ -6,6 +6,13 @@ interface DownloadActionsProps {
   onDownload: () => void
 }
 
+/**
+ * HTML ダウンロードボタンと出力ファイル名の表示コンポーネント。
+ *
+ * @param props.canDownload - ダウンロード可能状態か否か
+ * @param props.outputFileName - 表示する出力ファイル名
+ * @param props.onDownload - ダウンロードボタン押下ハンドラ
+ */
 export function DownloadActions({
   canDownload,
   outputFileName,

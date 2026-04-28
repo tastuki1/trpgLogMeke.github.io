@@ -7,6 +7,13 @@ interface CharacterSettingsProps {
   onColorChange: (name: string, color: string) => void
 }
 
+/**
+ * キャラクター名・カラー・表示スタイルの設定フォームコンポーネント。
+ *
+ * @param props.characters - キャラクター設定のレコード
+ * @param props.onStyleChange - 表示スタイル変更ハンドラ
+ * @param props.onColorChange - カラー変更ハンドラ
+ */
 export function CharacterSettings({
   characters,
   onStyleChange,

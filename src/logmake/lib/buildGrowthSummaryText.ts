@@ -1,5 +1,14 @@
 import type { GrowthAnalysis, GrowthFilters } from '@/logmake/types'
 
+/**
+ * 成長分析結果からフィルタ適用後のサマリーテキストを生成する。
+ * キャラクター別・ラベル別に整形し、クリップボード貼り付け用のプレーンテキストを返す。
+ *
+ * @param analysis - analyzeGrowth の戻り値
+ * @param filters - 表示するラベル・列のフィルタ条件
+ * @param visibleTabs - タブ名をキーとする表示フラグのマップ
+ * @returns 改行区切りのサマリーテキスト（表示対象がない場合は空文字列）
+ */
 export function buildGrowthSummaryText(
   analysis: GrowthAnalysis,
   filters: GrowthFilters,

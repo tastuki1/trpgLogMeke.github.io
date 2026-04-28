@@ -15,6 +15,12 @@ interface GrowthCheckProps {
   tabs: Record<string, TabConfig>
 }
 
+/**
+ * 成長判定の一覧表示・フィルタリング・クリップボードコピーを行うコンポーネント。
+ *
+ * @param props.analysis - 成長判定の分析結果（未解析時は null）
+ * @param props.tabs - タブ表示設定のレコード
+ */
 export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
   const [filters, setFilters] = useState<GrowthFilters>(() =>
     createGrowthFilters([])

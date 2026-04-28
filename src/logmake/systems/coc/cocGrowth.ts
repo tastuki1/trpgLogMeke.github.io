@@ -8,6 +8,10 @@ import { normalizeDefaultSkillValues } from '@/logmake/lib/defaultSkillValues'
 import type { DefaultSkillValueMap } from '@/logmake/lib/defaultSkillValues'
 import type { DiceEvent, DiceEventTarget, GrowthLabel } from '@/logmake/types'
 
+/**
+ * createCocGrowth の設定オプション。
+ * 細かい成功種別の分類ロジックはシステム版ごとに classifyRefinedSuccess で定義する。
+ */
 export interface CocGrowthConfig {
   labels: GrowthLabel[]
   rawDefaultSkillValues: unknown
@@ -20,6 +24,14 @@ export interface CocGrowthConfig {
   }) => GrowthLabel
 }
 
+/**
+ * CoC 汎用の成長判定機能を生成するファクトリ。
+ * クリティカル・ファンブル・故障の判定は共通ロジックで行い、
+ * それ以外の成功種別の分類は config.classifyRefinedSuccess に委譲する。
+ *
+ * @param config - ラベル定義・デフォルト技能値・成功分類ロジックの設定
+ * @returns GrowthCapability の実装
+ */
 export function createCocGrowth(config: CocGrowthConfig): GrowthCapability {
   return {
     labels: config.labels,

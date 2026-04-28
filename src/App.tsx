@@ -1,3 +1,4 @@
+/** ツール一覧ページのルートコンポーネント。logmake/ への導線を提供する */
 function App() {
   return (
     <main className="toolIndex">

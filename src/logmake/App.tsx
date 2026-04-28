@@ -6,6 +6,7 @@ import { OutputSettings } from '@/logmake/components/features/OutputSettings'
 import { useLogmakePageState } from '@/logmake/hooks/useLogmakePageState'
 import styles from '@/logmake/styles/page.module.css'
 
+/** ログ整形ページのルートコンポーネント。useLogmakePageState で状態を管理し各機能コンポーネントに配布する */
 function App() {
   const {
     actions,

@@ -8,6 +8,14 @@ import type {
   OutputSpeakerEntry,
 } from '@/logmake/types'
 
+/**
+ * 出力データモデルと整形設定から完全な HTML 文字列を生成する。
+ * タブ表示切り替えスクリプトやスタイルシートも含む自己完結型の HTML を返す。
+ *
+ * @param outputModel - buildOutputModel の戻り値
+ * @param settings - フォームで設定したログ整形設定
+ * @returns 完全な HTML 文字列
+ */
 export function buildOutputHtml(
   outputModel: OutputModel,
   settings: LogmakeSettings
@@ -64,6 +72,13 @@ export function buildOutputHtml(
 </html>`
 }
 
+/**
+ * OutputSection を HTML の div ブロックに変換する。
+ * 主要タブは 'mainBlock'、サブタブはタブカラーのボーダーを付与する。
+ *
+ * @param section - 変換対象のセクションデータ
+ * @returns HTML 文字列
+ */
 function renderSection(section: OutputSection): string {
   const className = isPrimaryTab(section.tabName)
     ? 'mainBlock'
@@ -78,6 +93,13 @@ function renderSection(section: OutputSection): string {
 </div>`
 }
 
+/**
+ * OutputSpeakerEntry をスタイル別の HTML ブロックに変換する。
+ * character / scene / item で異なるマークアップを生成する。
+ *
+ * @param entry - 変換対象の発言ブロック
+ * @returns HTML 文字列
+ */
 function renderSpeaker(entry: OutputSpeakerEntry): string {
   if (entry.style === 'character') {
     return `<div class="char" style="color: ${entry.color};">
@@ -97,12 +119,25 @@ ${entry.paragraphs.map(renderParagraph).join('\n')}`
 </div>`
 }
 
+/**
+ * ContentParagraph を `<p>` タグに変換する。
+ *
+ * @param paragraph - 変換対象の段落
+ * @returns HTML 文字列
+ */
 function renderParagraph(paragraph: ContentParagraph): string {
   return `<p class="bbb">
     ${paragraph.tokens.map(renderToken).join('<br>')}
 </p>`
 }
 
+/**
+ * ContentToken を span タグに変換する。
+ * highlight の種別に応じてグラデーション背景を付与する。
+ *
+ * @param token - 変換対象のトークン
+ * @returns HTML 文字列
+ */
 function renderToken(token: ContentToken): string {
   if (token.highlight === 'success') {
     return `<span style="background: ${SUCCESS_HIGHLIGHT};">${token.content}</span>`
@@ -115,6 +150,12 @@ function renderToken(token: ContentToken): string {
   return `<span>${token.content}</span>`
 }
 
+/**
+ * 設定値を埋め込んだ `<style>` タグ文字列を生成する。
+ *
+ * @param settings - フレーム色・背景色・文字色などの整形設定
+ * @returns style タグを含む HTML 文字列
+ */
 function buildStyle(settings: LogmakeSettings): string {
   return `<style>
   @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
@@ -242,6 +283,12 @@ function buildStyle(settings: LogmakeSettings): string {
   </style>`
 }
 
+/**
+ * HTML テキストノードに埋め込む文字列をエスケープする。
+ *
+ * @param text - エスケープ対象の文字列
+ * @returns HTML エスケープ済み文字列
+ */
 function escapeText(text: string): string {
   return text
     .replaceAll('&', '&amp;')
@@ -251,6 +298,13 @@ function escapeText(text: string): string {
     .replaceAll("'", '&#39;')
 }
 
+/**
+ * HTML 属性値に埋め込む文字列をエスケープする。
+ * escapeText と同一のエスケープルールを適用する。
+ *
+ * @param text - エスケープ対象の文字列
+ * @returns HTML エスケープ済み文字列
+ */
 function escapeAttribute(text: string): string {
   return escapeText(text)
 }

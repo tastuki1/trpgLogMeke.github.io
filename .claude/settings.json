@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": ["Bash(pnpm run lint)", "Bash(pnpm test *)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | grep -qE '\\.(ts|tsx)$' && pnpm run lint || true",
+            "timeout": 60,
+            "statusMessage": "ESLint (ts/tsx)"
+          }
+        ]
+      }
+    ]
+  }
+}

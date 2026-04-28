@@ -8,6 +8,14 @@ interface TabSettingsProps {
   onColorChange: (name: string, color: string) => void
 }
 
+/**
+ * タブの表示・非表示とカラーを設定するフォームコンポーネント。
+ * 主要タブ（メイン・情報）はカラー変更を表示しない。
+ *
+ * @param props.tabs - タブ設定のレコード
+ * @param props.onVisibilityChange - 表示切り替えハンドラ
+ * @param props.onColorChange - カラー変更ハンドラ
+ */
 export function TabSettings({
   tabs,
   onVisibilityChange,

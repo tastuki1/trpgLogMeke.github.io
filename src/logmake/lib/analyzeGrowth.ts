@@ -2,6 +2,15 @@ import type { DefaultSkillValueMap } from '@/logmake/lib/defaultSkillValues'
 import type { LogmakeSystem } from '@/logmake/systems'
 import type { DiceRecord, GrowthAnalysis, ParsedLog } from '@/logmake/types'
 
+/**
+ * パース済みログから成長判定レコードを集約し、分析結果を返す。
+ * system.growth が未定義のシステムでは空の分析結果を返す。
+ *
+ * @param parsedLog - parseLogHtml の戻り値
+ * @param system - 使用するゲームシステム（成長判定ロジックを保持）
+ * @param defaultSkillValues - 初期値成功の判定に使う技能初期値マップ
+ * @returns 成長判定の集約結果
+ */
 export function analyzeGrowth(
   parsedLog: ParsedLog,
   system: LogmakeSystem,

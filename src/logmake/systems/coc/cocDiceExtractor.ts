@@ -6,6 +6,10 @@ import {
 } from '@/logmake/systems/coc/shared'
 import type { DiceEvent, DiceEventTarget } from '@/logmake/types'
 
+/**
+ * createCocDiceExtractor の設定オプション。
+ * CoC6版・CoC7版でコマンドプレフィックスなどが異なる。
+ */
 export interface CocDiceExtractorConfig {
   commandPrefix: string
   optionRegex: RegExp
@@ -13,6 +17,7 @@ export interface CocDiceExtractorConfig {
   skillAliases: Record<string, string>
 }
 
+/** parseDiceResult の内部解析結果 */
 interface ParsedCocDiceResult {
   command: string
   outcomeText: string
@@ -23,9 +28,18 @@ interface ParsedCocDiceResult {
 
 const SKILL_SEPARATOR_REGEX = /[,，、]/
 const BRACKET_ONLY_SKILL_REGEX = /^【([^】]+)】$/
+/** SAN・能力値ロールなど、成長判定から除外する特殊ステータス用正規表現 */
 const STATUS_REGEX =
   /SAN値チェック|正気度ロール|STR|CON|POW|DEX|APP|SIZ|INT|EDU|アイデア|幸運|ショックロール|知識/
 
+/**
+ * CoC 汎用のダイスイベント抽出関数を生成するファクトリ。
+ * d100 ロール形式とコマンド形式の両パターンに対応し、
+ * 複合コマンドや複数技能を持つロールも解析する。
+ *
+ * @param config - コマンドプレフィックス・オプション正規表現などの設定
+ * @returns ログフラグメント文字列を受け取り DiceEvent を返す抽出関数
+ */
 export function createCocDiceExtractor(
   config: CocDiceExtractorConfig,
 ): (fragment: string) => DiceEvent | undefined {
@@ -59,6 +73,14 @@ export function createCocDiceExtractor(
   }
 }
 
+/**
+ * フラグメント文字列から d100 形式またはコマンド形式のダイス結果を解析する。
+ *
+ * @param fragment - 解析対象のログフラグメント
+ * @param d100ResultRegex - d100 ロール形式の正規表現
+ * @param commandResultRegex - コマンド形式の正規表現
+ * @returns 解析結果、またはいずれにも一致しない場合は undefined
+ */
 function parseDiceResult(
   fragment: string,
   d100ResultRegex: RegExp,
@@ -97,6 +119,16 @@ function parseDiceResult(
   return undefined
 }
 
+/**
+ * コマンド・テール・パートアウトカムから DiceEventTarget の配列を構築する。
+ * ブラケット形式・複合コマンド・単一技能など複数の記法に対応する。
+ *
+ * @param command - ダイスコマンド文字列
+ * @param rawTail - 技能名部分の生テキスト
+ * @param partOutcomes - 複合コマンド時の各部分アウトカム配列
+ * @param config - 技能エイリアスや複合コマンドパターン
+ * @returns 判定対象の配列
+ */
 function parseDiceTargets(
   command: string,
   rawTail: string,
@@ -138,6 +170,14 @@ function parseDiceTargets(
   return [createDiceEventTarget(canonicalizeTargetName(tail, config.skillAliases), commandTargets[0])]
 }
 
+/**
+ * コマンド文字列から目標値（数値）の配列を取得する。
+ * CBR コンバインコマンドの場合は 2 つの値を返す。
+ *
+ * @param command - 解析対象のコマンド文字列
+ * @param combinePattern - コンバインコマンドを検出する正規表現
+ * @returns 目標値の配列（目標値なしの場合は空配列）
+ */
 function parseCommandTargets(command: string, combinePattern: RegExp): number[] {
   const combineMatch = command.match(combinePattern)
   if (combineMatch) {
@@ -148,12 +188,25 @@ function parseCommandTargets(command: string, combinePattern: RegExp): number[] 
   return targetMatch ? [Number(targetMatch[1])] : []
 }
 
+/**
+ * 技能名の1パーツをトリム・ブラケット除去・エイリアス変換して正規化する。
+ *
+ * @param part - 区切り文字で分割した技能名パーツ
+ * @param aliases - 技能エイリアスマップ
+ * @returns 正規化後の技能名
+ */
 function normalizeSkillPart(part: string, aliases: Record<string, string>): string {
   const trimmed = part.trim()
   const bracketOnlyMatch = trimmed.match(BRACKET_ONLY_SKILL_REGEX)
   return canonicalizeTargetName(bracketOnlyMatch?.[1] ?? trimmed, aliases)
 }
 
+/**
+ * d100 ロール形式（CCB<=N ... (1D100<=N) > ロール値 > アウトカム）を検出する正規表現を生成する。
+ *
+ * @param commandPrefix - CoC コマンドのプレフィックスパターン（例: 'CCB|CC'）
+ * @returns 正規表現
+ */
 function createD100ResultRegex(commandPrefix: string): RegExp {
   return new RegExp(
     [
@@ -168,6 +221,12 @@ function createD100ResultRegex(commandPrefix: string): RegExp {
   )
 }
 
+/**
+ * コマンド形式（CC<=N > ロール値 [parts] > アウトカム）を検出する正規表現を生成する。
+ *
+ * @param commandPrefix - CoC コマンドのプレフィックスパターン
+ * @returns 正規表現
+ */
 function createCommandResultRegex(commandPrefix: string): RegExp {
   return new RegExp(
     [
@@ -182,6 +241,12 @@ function createCommandResultRegex(commandPrefix: string): RegExp {
   )
 }
 
+/**
+ * コンバインコマンドの `[parts]` 部分から各パートのアウトカムを抽出する。
+ *
+ * @param rawParts - '[成功, 失敗]' の内側テキスト、または undefined
+ * @returns アウトカム文字列の配列
+ */
 function parsePartOutcomes(rawParts: string | undefined): string[] {
   return rawParts
     ? rawParts

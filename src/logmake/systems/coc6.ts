@@ -3,6 +3,7 @@ import { parseCoc6DiceToken } from '@/logmake/systems/coc/coc6DiceExtractor'
 import { coc6Growth } from '@/logmake/systems/coc/coc6Growth'
 import type { LogmakeSystem } from '@/logmake/systems/types'
 
+/** CoC6版のゲームシステム定義 */
 export const COC6_SYSTEM: LogmakeSystem = {
   id: 'CoC6',
   name: 'CoC 6版',

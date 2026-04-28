@@ -9,6 +9,12 @@ interface BasicSettingsProps {
   ) => void
 }
 
+/**
+ * ファイル名・タイトル・カラーなど基本設定のフォームコンポーネント。
+ *
+ * @param props.settings - 現在の整形設定
+ * @param props.onChange - 設定値変更ハンドラ
+ */
 export function BasicSettings({ settings, onChange }: BasicSettingsProps) {
   return (
     <table className={formStyles.settingsTable}>
