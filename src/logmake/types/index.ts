@@ -8,6 +8,7 @@ export type GrowthLabel =
   | 'イクストリーム'
   | 'ハード'
   | 'ファンブル'
+  | '故障'
   | '初期値成功'
   | '通常成功'
   | '通常失敗'
@@ -34,21 +35,29 @@ export interface CharacterConfig {
   style: CharacterStyle
 }
 
-export interface ParsedDiceOccurrence {
-  rawText: string
-  roll: number
-  skill: string
+export interface DiceEventTarget {
+  name: string
   judge: string | null
-  option: string
+  outcomeText?: string
+  target?: number
+}
+
+export interface DiceEvent {
+  rawText: string
+  command: string
   outcomeText: string
+  primaryRoll: number | null
+  rolls: number[]
+  targets: DiceEventTarget[]
   status: boolean
   highlight?: DiceHighlight
+  meta?: Record<string, unknown>
 }
 
 export interface ContentToken {
   content: string
   highlight?: DiceHighlight
-  dice?: ParsedDiceOccurrence
+  dice?: DiceEvent
 }
 
 export interface ContentParagraph {
