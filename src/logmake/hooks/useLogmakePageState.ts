@@ -11,6 +11,7 @@ import {
   sanitizeUploadFileName,
 } from '@/logmake/lib/defaults'
 import { parseLogHtml } from '@/logmake/lib/parseLogHtml'
+import { sortCharacterRecord } from '@/logmake/lib/sortCharacters'
 import { downloadFile } from '@/logmake/lib/utils/downloadFile'
 import { getLogmakeSystem } from '@/logmake/systems'
 import type {
@@ -52,8 +53,6 @@ export function useLogmakePageState() {
   const [characters, setCharacters] = useState<Record<string, CharacterConfig>>(
     {}
   )
-  const [statusMessage, setStatusMessage] =
-    useState('整形したいログを選択してください。')
 
   const fileReader = useFileReader()
   const selectedSystem = useMemo(() => getLogmakeSystem(system), [system])
@@ -114,10 +113,7 @@ export function useLogmakePageState() {
     }
 
     setTabs(parsedLog.tabs)
-    setCharacters(parsedLog.characters)
-    setStatusMessage(
-      `${Object.keys(parsedLog.characters).length} 件のキャラクタと ${Object.keys(parsedLog.tabs).length} 件のタブを読み込みました。`
-    )
+    setCharacters(sortCharacterRecord(parsedLog.characters))
   }, [parsedLog, source.rawHtml])
 
   /**
@@ -139,27 +135,22 @@ export function useLogmakePageState() {
           ...createDefaultSettings(baseName),
           nameColor: current.nameColor,
           frameColor: current.frameColor,
-          backColor: current.backColor,
+          darkMode: current.darkMode,
+          writingMode: current.writingMode,
         }))
       })
     } catch {
-      setStatusMessage('ファイルの読み込みに失敗しました。')
+      return
     }
   }
 
   /**
-   * ゲームシステムを切り替え、ステータスメッセージを更新する。
+   * ゲームシステムを切り替える。
    *
    * @param nextSystem - 切り替え先のゲームシステム識別子
    */
   function handleSystemChange(nextSystem: GameSystem) {
-    const nextProfile = getLogmakeSystem(nextSystem)
     setSystem(nextSystem)
-    setStatusMessage(
-      source.rawHtml
-        ? `${nextProfile.name} 向けに再解析しています。`
-        : `${nextProfile.name} 向けの正規表現と初期技能定義へ切り替えました。`
-    )
   }
 
   /**
@@ -273,15 +264,12 @@ export function useLogmakePageState() {
   /** 現在の出力モデルを HTML ファイルとしてダウンロードする */
   function handleDownload() {
     if (outputModel.sections.length === 0) {
-      setStatusMessage('ダウンロードできる内容がまだありません。')
       return
     }
 
     const html = buildOutputHtml(outputModel, settings)
     const blob = new Blob([html], { type: 'text/html' })
     downloadFile(blob, `${settings.logFileName || 'log'}.html`)
-
-    setStatusMessage('HTML を生成してダウンロードしました。')
   }
 
   return {
@@ -291,7 +279,6 @@ export function useLogmakePageState() {
       settings,
       tabs,
       characters,
-      statusMessage,
     },
     derived: {
       analysis,

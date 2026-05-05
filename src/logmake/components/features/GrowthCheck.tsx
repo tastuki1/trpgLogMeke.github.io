@@ -4,11 +4,7 @@ import { createGrowthFilters } from '@/logmake/lib/defaults'
 import { buildGrowthSummaryText } from '@/logmake/lib/buildGrowthSummaryText'
 import { useClipboard } from '@/logmake/hooks/useClipboard'
 import formStyles from '@/logmake/styles/forms.module.css'
-import type {
-  GrowthAnalysis,
-  GrowthFilters,
-  TabConfig,
-} from '@/logmake/types'
+import type { GrowthAnalysis, GrowthFilters, TabConfig } from '@/logmake/types'
 
 interface GrowthCheckProps {
   analysis: GrowthAnalysis | null
@@ -32,7 +28,9 @@ export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
   const clipboard = useClipboard()
 
   useEffect(() => {
-    setFilters((current) => createGrowthFilters(analysis?.labels ?? [], current))
+    setFilters((current) =>
+      createGrowthFilters(analysis?.labels ?? [], current)
+    )
   }, [analysis?.labels])
 
   useEffect(() => {
@@ -58,8 +56,7 @@ export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
   }
 
   return (
-    <details className={formStyles.detailsBlock}>
-      <summary>成長技能チェック</summary>
+    <div>
       {analysis ? (
         <div className={formStyles.growthBox}>
           <table className={formStyles.dispCheck}>
@@ -97,7 +94,7 @@ export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
                     {analysis.labels.map((label) => (
                       <label key={label} className={formStyles.checkboxLabel}>
                         <input
-                          checked={filters.labels[label]}
+                          checked={filters.labels[label] ?? true}
                           type="checkbox"
                           onChange={(event) => {
                             const checked = event.currentTarget.checked
@@ -169,7 +166,7 @@ export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
                           }))
                         }}
                       />
-                      ステ依存表示
+                      ステ依存
                     </label>
                   </div>
                 </td>
@@ -197,7 +194,7 @@ export function GrowthCheck({ analysis, tabs }: GrowthCheckProps) {
           ログを読み込むと成長判定の集計結果がここに表示されます。
         </div>
       )}
-    </details>
+    </div>
   )
 }
 

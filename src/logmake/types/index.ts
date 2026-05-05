@@ -31,7 +31,8 @@ export interface LogmakeSettings {
   title: string
   nameColor: string
   frameColor: string
-  backColor: string
+  darkMode: boolean
+  writingMode: 'horizontal' | 'vertical'
 }
 
 /**

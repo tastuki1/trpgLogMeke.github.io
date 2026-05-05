@@ -86,7 +86,7 @@ describe('buildOutputHtml', () => {
     const output = buildOutputHtml(emptyModel, {
       ...createDefaultSettings('test'),
       frameColor: '#123456',
-      backColor: '#abcdef',
+      nameColor: '#abcdef',
     })
 
     expect(output).toContain('#123456')
@@ -98,7 +98,7 @@ describe('buildOutputHtml', () => {
     const output = buildOutputHtml(emptyModel, {
       ...createDefaultSettings('test'),
       frameColor: 'rgba(255,255,255,0)',
-      backColor: 'rgba(100, 149, 237, 0.5)',
+      nameColor: 'rgba(100, 149, 237, 0.5)',
     })
 
     expect(output).toContain('rgba(255,255,255,0)')
@@ -111,12 +111,98 @@ describe('buildOutputHtml', () => {
       ...createDefaultSettings('test'),
       frameColor: '#fff; } body { display: none }',
       nameColor: 'javascript:alert(1)',
-      backColor: 'expression(alert(1))',
     })
 
     expect(output).not.toContain('display: none')
     expect(output).not.toContain('javascript:')
-    expect(output).not.toContain('expression(')
+  })
+
+  it('uses fixed light and dark background colors', () => {
+    const emptyModel: OutputModel = { sections: [], toggles: [] }
+    const lightOutput = buildOutputHtml(
+      emptyModel,
+      createDefaultSettings('test')
+    )
+    const darkOutput = buildOutputHtml(emptyModel, {
+      ...createDefaultSettings('test'),
+      darkMode: true,
+    })
+
+    expect(lightOutput).toContain('background-color: #ffffff')
+    expect(darkOutput).toContain('background-color: #2d2d2d')
+  })
+
+  it('uses vertical writing mode styles when configured', () => {
+    const model: OutputModel = {
+      sections: [
+        {
+          tabName: '雑談',
+          tabColor: '#ff0000',
+          tabVisibilityClass: 'logmake-tab-0',
+          entries: [
+            {
+              charName: '探索者A',
+              color: '#333333',
+              style: 'character',
+              paragraphs: [
+                {
+                  tokens: [
+                    {
+                      content: '成功',
+                      highlight: 'success',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      toggles: [],
+    }
+
+    const output = buildOutputHtml(model, {
+      ...createDefaultSettings('test'),
+      writingMode: 'vertical',
+    })
+
+    expect(output).toContain('writing-mode: vertical-rl')
+    expect(output).toContain('border-top: 3px solid #ff0000')
+    expect(output).toContain(
+      'linear-gradient(to right, #7fbfff 50%, transparent 50%)'
+    )
+  })
+
+  it('縦書きモードではタブに border-top を使用する', () => {
+    const model: OutputModel = {
+      sections: [{ tabName: '雑談', tabColor: '#ff0000', tabVisibilityClass: 'logmake-tab-0', entries: [] }],
+      toggles: [],
+    }
+    const output = buildOutputHtml(model, { ...createDefaultSettings('test'), writingMode: 'vertical' })
+
+    expect(output).toContain('border-top: 3px solid #ff0000')
+    expect(output).not.toContain('border-left: 3px solid #ff0000')
+  })
+
+  it('縦書きモードでは成功ハイライトに右半分グラデーションを使用する', () => {
+    const html = readFileSync(path.join(FIXTURE_DIR, 'coc6-sample.html'), 'utf8')
+    const parsed = parseLogHtml(html, COC6_SYSTEM)
+    const outputModel = buildOutputModel(parsed, { tabs: parsed.tabs, characters: parsed.characters })
+    const output = buildOutputHtml(outputModel, { ...createDefaultSettings('test'), writingMode: 'vertical' })
+
+    expect(output).toContain('linear-gradient(to right, #7fbfff 50%, transparent 50%)')
+    expect(output).not.toContain('linear-gradient(transparent 70%, #7fbfff 0%)')
+  })
+
+  it('ダークモードではタブ背景色に rgba(200,200,200,0.06) を使用する', () => {
+    const model: OutputModel = {
+      sections: [{ tabName: '雑談', tabColor: '#888888', tabVisibilityClass: 'logmake-tab-0', entries: [] }],
+      toggles: [],
+    }
+    const output = buildOutputHtml(model, { ...createDefaultSettings('test'), darkMode: true })
+
+    expect(output).toContain('rgba(200,200,200,0.06)')
+    expect(output).not.toContain('rgba(127,127,127,0.1)')
   })
 
   it('replaces invalid CSS color in section tabColor with a safe fallback', () => {

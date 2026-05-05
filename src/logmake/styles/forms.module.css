@@ -23,8 +23,8 @@
 .detailsBlock {
   margin-top: 1rem;
   padding: 0.5rem;
-  border: 1px solid #e6ece3;
-  border-left: 3px solid #6b8e23;
+  border: 1px solid var(--clr-details-border);
+  border-left: 3px solid var(--clr-details-accent);
 }
 
 .growthBox {
@@ -66,7 +66,7 @@
 .fieldLegend {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #314125;
+  color: var(--clr-label);
 }
 
 .input,
@@ -76,11 +76,27 @@
   width: 12rem;
   min-width: 0;
   padding: 0.2rem;
-  border: 1px solid #888;
+  border: 1px solid var(--clr-input-border);
   border-radius: 0;
-  background: #fff;
-  color: #22311d;
+  background: var(--clr-input-bg);
+  color: var(--clr-text);
   font: inherit;
+}
+
+.fileInput::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--clr-input-border);
+  border-radius: 4px;
+  background: var(--clr-btn-secondary);
+  color: var(--clr-label);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fileInput::file-selector-button:hover {
+  background: var(--clr-btn-secondary-hover);
 }
 
 .colorInput {
@@ -89,25 +105,109 @@
   padding: 0.3rem;
   border: 1px solid rgba(99, 115, 78, 0.18);
   border-radius: 0;
-  background: #fff;
+  background: var(--clr-input-bg);
+}
+
+.colorPickerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.colorSwatch {
+  width: 3.5rem;
+  height: 1.8rem;
+  padding: 0.15rem 0.2rem;
+  border: 1px solid rgba(99, 115, 78, 0.35);
+  border-radius: 4px;
+  background: var(--clr-input-bg);
+  cursor: pointer;
 }
 
 .inlineOptions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+  align-items: center;
 }
 
 .radioLabel,
 .checkboxLabel {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: #222;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--clr-details-border);
+  border-radius: 4px;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+}
+
+.checkboxLabel:has(input:checked) {
+  border-color: var(--clr-details-accent);
+  background: var(--clr-btn-secondary);
+  color: var(--clr-label);
+  font-weight: 700;
+}
+
+.checkboxLabel:has(input:focus-visible) {
+  outline: 2px solid var(--clr-details-accent);
+  outline-offset: 2px;
+}
+
+.checkboxLabel input[type='checkbox'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* トグルスイッチ */
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 2.6rem;
+  height: 1.4rem;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--clr-input-border);
+  border-radius: 1.4rem;
+  transition: background 0.25s;
+}
+
+.toggleSlider::before {
+  content: '';
+  position: absolute;
+  height: 1rem;
+  width: 1rem;
+  left: 0.2rem;
+  bottom: 0.2rem;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.25s;
+}
+
+.toggleSwitch input:checked + .toggleSlider {
+  background: var(--clr-details-accent);
+}
+
+.toggleSwitch input:checked + .toggleSlider::before {
+  transform: translateX(1.2rem);
 }
 
 .table {
@@ -122,16 +222,16 @@
   align-items: center;
   padding: 0.7rem 0.8rem;
   border-radius: 0;
-  background: #f7f7f7;
+  background: var(--clr-surface-alt);
 }
 
 .rowTitle {
   font-weight: 700;
-  color: #314125;
+  color: var(--clr-label);
 }
 
 .secondaryText {
-  color: #63734e;
+  color: var(--clr-text-muted);
   font-size: 0.88rem;
 }
 
@@ -140,7 +240,7 @@
   gap: 0.3rem;
   padding: 0.2rem;
   border-radius: 0;
-  background: #edf3df;
+  background: var(--clr-btn-secondary);
 }
 
 .tripleOptions label {
@@ -163,7 +263,7 @@
 .sampleOptions label {
   display: block;
   cursor: pointer;
-  width: 2rem;
+  width: 2.8rem;
   margin: 0;
   padding: 0.5rem;
   background: #bdc3c7;
@@ -185,14 +285,24 @@
   gap: 0.6rem;
 }
 
+.characterNameCell {
+  min-width: 8rem;
+  max-width: 16rem;
+  overflow-wrap: break-word;
+}
+
 .primaryButton,
 .secondaryButton {
-  border: 1px solid #888;
-  border-radius: 0;
-  padding: 0.72rem 1.05rem;
+  border: 1px solid var(--clr-input-border);
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    border-color 0.15s;
 }
 
 .primaryButton {
@@ -201,9 +311,19 @@
   box-shadow: none;
 }
 
+.primaryButton:hover:not(:disabled) {
+  background: #e8e8e8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
 .secondaryButton {
-  background: #edf3df;
-  color: #354827;
+  background: var(--clr-btn-secondary);
+  color: var(--clr-label);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: var(--clr-btn-secondary-hover);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .summary {
@@ -211,7 +331,7 @@
   overflow: auto;
   padding: 0.5rem 1rem;
   border-radius: 0;
-  background: #fff;
+  background: var(--clr-surface);
   border: 0;
   white-space: pre-wrap;
   font-family:
@@ -223,13 +343,13 @@
 .emptyState {
   padding: 0.5rem;
   border-radius: 0;
-  background: rgba(245, 247, 240, 0.88);
-  color: #5d6c53;
+  background: var(--clr-surface-alt);
+  color: var(--clr-text-muted);
 }
 
 .sampleTab {
   margin: 1.5rem 0;
-  padding: 0.5rem 1.5rem 0.5rem 1rem;
+  padding: 1rem 1.5rem 1rem 1rem;
   background: rgba(127, 127, 127, 0.1);
   overflow-wrap: break-word;
 }
@@ -274,8 +394,8 @@
 }
 
 .sceneName {
-  margin-left: 0.5rem;
-  font-weight: 700;
+  margin: 0 0 0 0.5rem;
+  padding: 0;
 }
 
 .sceneHeading {
@@ -312,8 +432,230 @@
   margin-top: 1rem;
 }
 
+.graphControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .downloadBlock {
   margin-top: 2rem;
+}
+
+/* ---- settings section (タブ・キャラクタ共通) ---- */
+
+.settingsSection {
+  margin-top: 1.25rem;
+}
+
+.sectionTitle {
+  font-weight: 700;
+  padding-bottom: 0.3rem;
+  color: var(--clr-text);
+}
+
+.settingsGrid {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+/* タブ設定: 出力(チェック) / タブ名 / 色 */
+.settingsGridHeader {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 4rem;
+  gap: 0.5rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.82rem;
+  color: var(--clr-text-muted);
+  font-weight: 700;
+}
+
+.settingsGridRow {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 4rem;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.35rem 0.4rem;
+  background: var(--clr-surface-alt);
+  border-radius: 0;
+}
+
+/* タブ設定用グリッド（出力 / タブ名 / 色）、名前列を20rem固定 */
+.settingsGridTab {
+  grid-template-columns: 2.5rem minmax(0, 20rem) 4rem;
+}
+
+/* キャラクタ設定用グリッド（名前 / 色 / 種別）、名前列を20rem固定 */
+.settingsGridChar {
+  grid-template-columns: minmax(0, 20rem) 4rem auto;
+}
+
+.colName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+.colCharName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--clr-text);
+  min-width: 0;
+}
+
+.colToggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.colColor {
+  display: flex;
+  align-items: center;
+}
+
+.colStyle {
+  display: flex;
+  align-items: center;
+}
+
+/* ---- dialog (表示サンプル) ---- */
+
+.sampleDialog {
+  max-width: min(90vw, 560px);
+  width: 100%;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.sampleDialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.sampleDialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: #f0f4e8;
+  border-bottom: 1px solid #dde5cc;
+  font-weight: 700;
+  color: #314125;
+}
+
+.dialogCloseButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #63734e;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.dialogCloseButton:hover {
+  background: #dde5cc;
+}
+
+/* ---- BasicSettings / FileUpload カード型レイアウト ---- */
+
+.basicCard {
+  border-left: 3px solid var(--clr-details-accent);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: min(100%, 440px);
+  margin-top: 0.4rem;
+}
+
+.labelInputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fileControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.logFileDisplay {
+  display: inline-block;
+  min-width: 10rem;
+  max-width: 18rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--clr-details-border);
+  background: var(--clr-surface-alt);
+  color: var(--clr-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labelCell {
+  min-width: 5.5rem;
+  flex-shrink: 0;
+  font-size: 0.92rem;
+  color: var(--clr-text-muted);
+}
+
+.basicDivider {
+  border: none;
+  border-top: 1px solid var(--clr-details-border);
+  margin: 0.1rem 0;
+}
+
+.basicTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.basicInline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+}
+
+/* トグル両端ラベル */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.toggleLabel {
+  font-size: 0.82rem;
+  color: var(--clr-text-muted);
+  min-width: 2.2rem;
+}
+
+.sampleCompactButton {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--clr-input-border);
+  border-radius: 50%;
+  background: var(--clr-btn-secondary);
+  color: var(--clr-label);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1;
 }
 
 @media (max-width: 720px) {
@@ -323,5 +665,14 @@
 
   .row {
     grid-template-columns: 1fr;
+  }
+
+  .settingsGridHeader,
+  .settingsGridRow {
+    grid-template-columns: 2.5rem 1fr 3rem;
+  }
+
+  .settingsGridChar {
+    grid-template-columns: minmax(8rem, 1fr) 4rem auto;
   }
 }

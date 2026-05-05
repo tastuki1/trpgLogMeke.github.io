@@ -1,19 +1,32 @@
+import { useEffect, useState } from 'react'
+
+import { BasicSettings } from '@/logmake/components/features/BasicSettings'
+import { CharacterSettings } from '@/logmake/components/features/CharacterSettings'
 import { DisplaySample } from '@/logmake/components/features/DisplaySample'
+import { DownloadActions } from '@/logmake/components/features/DownloadActions'
 import { FileUpload } from '@/logmake/components/features/FileUpload'
 import { Graph } from '@/logmake/components/features/Graph'
 import { GrowthCheck } from '@/logmake/components/features/GrowthCheck'
-import { OutputSettings } from '@/logmake/components/features/OutputSettings'
+import { TabSettings } from '@/logmake/components/features/TabSettings'
 import { useLogmakePageState } from '@/logmake/hooks/useLogmakePageState'
 import styles from '@/logmake/styles/page.module.css'
+
+type ActiveTab = 'settings' | 'growth' | 'graph'
 
 /** ログ整形ページのルートコンポーネント。useLogmakePageState で状態を管理し各機能コンポーネントに配布する */
 function App() {
   const {
     actions,
     derived,
-    loading,
-    state: { characters, settings, source, statusMessage, system, tabs },
+    state: { characters, settings, source, system, tabs },
   } = useLogmakePageState()
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>('settings')
+  const hasSource = source.fileName !== null
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = settings.darkMode ? 'dark' : 'light'
+  }, [settings.darkMode])
 
   return (
     <main className={styles.page}>
@@ -23,15 +36,11 @@ function App() {
 
       <div className={styles.box5}>
         <FileUpload
-          defaultSkillValuesLoading={loading.defaultSkillValues}
-          isLoading={loading.file}
           sourceFileName={source.fileName}
           system={system}
           onFileSelect={actions.handleFileSelect}
           onSystemChange={actions.handleSystemChange}
         />
-
-        <div className={styles.status}>{statusMessage}</div>
 
         {derived.warnings.length > 0 ? (
           <section className={styles.alert}>
@@ -44,24 +53,61 @@ function App() {
           </section>
         ) : null}
 
-        <GrowthCheck analysis={derived.analysis} tabs={tabs} />
+        <div className={styles.pageTabs}>
+          <button
+            className={`${styles.pageTab} ${activeTab === 'settings' ? styles.pageTabActive : ''}`}
+            type="button"
+            onClick={() => setActiveTab('settings')}
+          >
+            出力設定
+          </button>
+          <button
+            className={`${styles.pageTab} ${activeTab === 'growth' ? styles.pageTabActive : ''}`}
+            type="button"
+            disabled={!hasSource}
+            onClick={() => setActiveTab('growth')}
+          >
+            成長技能チェック
+          </button>
+          <button
+            className={`${styles.pageTab} ${activeTab === 'graph' ? styles.pageTabActive : ''}`}
+            type="button"
+            disabled={!hasSource}
+            onClick={() => setActiveTab('graph')}
+          >
+            グラフ
+          </button>
+        </div>
 
-        <DisplaySample />
-
-        <Graph analysis={derived.analysis} characters={characters} />
-
-        <OutputSettings
-          canDownload={derived.canDownload}
-          characters={characters}
-          settings={settings}
-          tabs={tabs}
-          onCharacterColorChange={actions.handleCharacterColorChange}
-          onCharacterStyleChange={actions.handleCharacterStyleChange}
-          onDownload={actions.handleDownload}
-          onSettingChange={actions.handleSettingChange}
-          onTabColorChange={actions.handleTabColorChange}
-          onTabVisibilityChange={actions.handleTabVisibilityChange}
-        />
+        <div className={styles.pageTabContent}>
+          {activeTab === 'settings' && (
+            <>
+              <BasicSettings settings={settings} onChange={actions.handleSettingChange} />
+              <TabSettings
+                tabs={tabs}
+                onColorChange={actions.handleTabColorChange}
+                onVisibilityChange={actions.handleTabVisibilityChange}
+              />
+              <CharacterSettings
+                characters={characters}
+                onColorChange={actions.handleCharacterColorChange}
+                onStyleChange={actions.handleCharacterStyleChange}
+                sampleButton={<DisplaySample compact />}
+              />
+              <DownloadActions
+                canDownload={derived.canDownload}
+                outputFileName={settings.logFileName}
+                onDownload={actions.handleDownload}
+              />
+            </>
+          )}
+          {activeTab === 'growth' && (
+            <GrowthCheck analysis={derived.analysis} tabs={tabs} />
+          )}
+          {activeTab === 'graph' && (
+            <Graph analysis={derived.analysis} characters={characters} />
+          )}
+        </div>
       </div>
     </main>
   )

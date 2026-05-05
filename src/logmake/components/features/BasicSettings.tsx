@@ -1,3 +1,4 @@
+import { ColorPickerInput } from '@/logmake/components/ColorPickerInput'
 import formStyles from '@/logmake/styles/forms.module.css'
 import type { LogmakeSettings } from '@/logmake/types'
 
@@ -9,37 +10,26 @@ interface BasicSettingsProps {
   ) => void
 }
 
-/**
- * ファイル名・タイトル・カラーなど基本設定のフォームコンポーネント。
- *
- * @param props.settings - 現在の整形設定
- * @param props.onChange - 設定値変更ハンドラ
- */
 export function BasicSettings({ settings, onChange }: BasicSettingsProps) {
   return (
-    <table className={formStyles.settingsTable}>
-      <tbody>
-        <tr>
-          <th align="left" colSpan={2}>
-            ＜基本の設定＞
-          </th>
-        </tr>
-        <tr>
-          <td>ファイル名</td>
-          <td>
-          <input
-            id="file-name"
-            className={formStyles.input}
-            type="text"
-            value={settings.logFileName}
-            onChange={(event) => onChange('logFileName', event.currentTarget.value)}
-          />
+    <div className={formStyles.settingsSection}>
+      <div className={formStyles.sectionTitle}>＜基本設定＞</div>
+      <div className={formStyles.basicCard}>
+        <div className={formStyles.labelInputRow}>
+          <label className={formStyles.labelCell} htmlFor="file-name">ファイル名</label>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <input
+              id="file-name"
+              className={formStyles.input}
+              type="text"
+              value={settings.logFileName}
+              onChange={(event) => onChange('logFileName', event.currentTarget.value)}
+            />
             .html
-          </td>
-        </tr>
-        <tr>
-          <td>タイトル</td>
-          <td>
+          </span>
+        </div>
+        <div className={formStyles.labelInputRow}>
+          <label className={formStyles.labelCell} htmlFor="title">タイトル</label>
           <input
             id="title"
             className={formStyles.input}
@@ -47,45 +37,55 @@ export function BasicSettings({ settings, onChange }: BasicSettingsProps) {
             value={settings.title}
             onChange={(event) => onChange('title', event.currentTarget.value)}
           />
-          </td>
-        </tr>
-        <tr>
-          <td>タイトル色</td>
-          <td>
-          <input
-            id="name-color"
-            className={formStyles.colorInput}
-            type="color"
-            value={settings.nameColor}
-            onChange={(event) => onChange('nameColor', event.currentTarget.value)}
-          />
-          </td>
-        </tr>
-        <tr>
-          <td>外枠色</td>
-          <td>
-          <input
-            id="frame-color"
-            className={formStyles.colorInput}
-            type="color"
-            value={settings.frameColor}
-            onChange={(event) => onChange('frameColor', event.currentTarget.value)}
-          />
-          </td>
-        </tr>
-        <tr>
-          <td>背景色</td>
-          <td>
-          <input
-            id="back-color"
-            className={formStyles.colorInput}
-            type="color"
-            value={settings.backColor}
-            onChange={(event) => onChange('backColor', event.currentTarget.value)}
-          />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        </div>
+        <hr className={formStyles.basicDivider} />
+        <div className={formStyles.basicTwoCol}>
+          <div className={formStyles.toggleRow}>
+            <span className={formStyles.toggleLabel}>ライト</span>
+            <label className={formStyles.toggleSwitch} data-testid="dark-mode-toggle">
+              <input
+                type="checkbox"
+                checked={settings.darkMode}
+                onChange={(event) => onChange('darkMode', event.currentTarget.checked)}
+              />
+              <span className={formStyles.toggleSlider} />
+            </label>
+            <span className={formStyles.toggleLabel}>ダーク</span>
+          </div>
+          <div className={formStyles.toggleRow}>
+            <span className={formStyles.toggleLabel}>横書き</span>
+            <label className={formStyles.toggleSwitch}>
+              <input
+                type="checkbox"
+                checked={settings.writingMode === 'vertical'}
+                onChange={(event) =>
+                  onChange('writingMode', event.currentTarget.checked ? 'vertical' : 'horizontal')
+                }
+              />
+              <span className={formStyles.toggleSlider} />
+            </label>
+            <span className={formStyles.toggleLabel}>縦書き</span>
+          </div>
+        </div>
+        <div className={formStyles.basicTwoCol}>
+          <div className={formStyles.basicInline}>
+            <span>タイトル色</span>
+            <ColorPickerInput
+              ariaLabel="タイトル色"
+              value={settings.nameColor}
+              onChange={(v) => onChange('nameColor', v)}
+            />
+          </div>
+          <div className={formStyles.basicInline}>
+            <span>外枠色</span>
+            <ColorPickerInput
+              ariaLabel="外枠色"
+              value={settings.frameColor}
+              onChange={(v) => onChange('frameColor', v)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

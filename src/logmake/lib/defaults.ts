@@ -5,9 +5,14 @@ import type {
   TabConfig,
 } from '@/logmake/types'
 
-export const DEFAULT_NAME_COLOR = '#ffffff'
-export const DEFAULT_FRAME_COLOR = '#6b8e23'
-export const DEFAULT_BACK_COLOR = '#ffffff'
+export const LIGHT_NAME_COLOR = '#ffffff'
+export const LIGHT_FRAME_COLOR = '#6b8e23'
+export const LIGHT_BACK_COLOR = '#ffffff'
+
+export const DARK_NAME_COLOR = '#c8c8c8'
+export const DARK_FRAME_COLOR = '#2c3e50'
+export const DARK_BACK_COLOR = '#2d2d2d'
+
 
 export const SUCCESS_HIGHLIGHT =
   'linear-gradient(transparent 70%, #7fbfff 0%)'
@@ -56,9 +61,10 @@ export function createDefaultSettings(baseName = 'log'): LogmakeSettings {
   return {
     logFileName: baseName,
     title: baseName,
-    nameColor: DEFAULT_NAME_COLOR,
-    frameColor: DEFAULT_FRAME_COLOR,
-    backColor: DEFAULT_BACK_COLOR,
+    nameColor: LIGHT_NAME_COLOR,
+    frameColor: LIGHT_FRAME_COLOR,
+    darkMode: false,
+    writingMode: 'horizontal' as const,
   }
 }
 

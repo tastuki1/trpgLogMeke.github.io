@@ -1,5 +1,7 @@
 import {
+  DARK_BACK_COLOR,
   FAILURE_HIGHLIGHT,
+  LIGHT_BACK_COLOR,
   SUCCESS_HIGHLIGHT,
   isPrimaryTab,
 } from '@/logmake/lib/defaults'
@@ -24,6 +26,66 @@ export function buildOutputHtml(
   outputModel: OutputModel,
   settings: LogmakeSettings
 ): string {
+  const isVertical = settings.writingMode === 'vertical'
+  const successHL = isVertical
+    ? 'linear-gradient(to right, #7fbfff 50%, transparent 50%)'
+    : SUCCESS_HIGHLIGHT
+  const failureHL = isVertical
+    ? 'linear-gradient(to right, #ff7f7f 50%, transparent 50%)'
+    : FAILURE_HIGHLIGHT
+  const tabBorderProp = isVertical ? 'border-top' : 'border-left'
+
+  // token.content は CCFOLIA の innerHTML をそのまま通す（意図的・escapeText 不可）。
+  // エスケープすると CCFOLIA のインライン書式（<b> 等）が壊れる。
+  function renderToken(token: ContentToken): string {
+    if (token.highlight === 'success') {
+      return `<span style="background: ${successHL};">${token.content}</span>`
+    }
+    if (token.highlight === 'failure') {
+      return `<span style="background: ${failureHL};">${token.content}</span>`
+    }
+    return `<span>${token.content}</span>`
+  }
+
+  function renderParagraph(paragraph: ContentParagraph): string {
+    return `<p class="bbb">
+    ${paragraph.tokens.map(renderToken).join('<br>')}
+</p>`
+  }
+
+  function renderSpeaker(entry: OutputSpeakerEntry): string {
+    if (entry.style === 'character') {
+      return `<div class="char" style="color: ${entry.color};">
+    <b>${escapeText(entry.charName)}</b>
+    ${entry.paragraphs.map(renderParagraph).join('\n')}
+</div>`
+    }
+
+    if (entry.style === 'scene') {
+      return `<p class="KP" style="color: ${entry.color};">${escapeText(entry.charName)}</p>
+${entry.paragraphs.map(renderParagraph).join('\n')}`
+    }
+
+    return `<div class="box">
+    <span class="box-title">${escapeText(entry.charName)}</span>
+    ${entry.paragraphs.map(renderParagraph).join('\n')}
+</div>`
+  }
+
+  function renderSection(section: OutputSection): string {
+    const className = isPrimaryTab(section.tabName)
+      ? 'mainBlock'
+      : section.tabVisibilityClass
+
+    const style = isPrimaryTab(section.tabName)
+      ? ''
+      : ` style="${tabBorderProp}: 3px solid ${sanitizeCssColor(section.tabColor)};"`
+
+    return `<div class="${className}"${style}>
+    ${section.entries.map(renderSpeaker).join('\n')}
+</div>`
+  }
+
   const viewCheck = outputModel.toggles
     .map(
       (tab) => `
@@ -77,86 +139,6 @@ export function buildOutputHtml(
 }
 
 /**
- * OutputSection を HTML の div ブロックに変換する。
- * 主要タブは 'mainBlock'、サブタブはタブカラーのボーダーを付与する。
- *
- * @param section - 変換対象のセクションデータ
- * @returns HTML 文字列
- */
-function renderSection(section: OutputSection): string {
-  const className = isPrimaryTab(section.tabName)
-    ? 'mainBlock'
-    : section.tabVisibilityClass
-
-  const style = isPrimaryTab(section.tabName)
-    ? ''
-    : ` style="border-left: 3px solid ${sanitizeCssColor(section.tabColor)};"`
-
-  return `<div class="${className}"${style}>
-    ${section.entries.map(renderSpeaker).join('\n')}
-</div>`
-}
-
-/**
- * OutputSpeakerEntry をスタイル別の HTML ブロックに変換する。
- * character / scene / item で異なるマークアップを生成する。
- *
- * @param entry - 変換対象の発言ブロック
- * @returns HTML 文字列
- */
-function renderSpeaker(entry: OutputSpeakerEntry): string {
-  if (entry.style === 'character') {
-    return `<div class="char" style="color: ${entry.color};">
-    <b>${escapeText(entry.charName)}</b>
-    ${entry.paragraphs.map(renderParagraph).join('\n')}
-</div>`
-  }
-
-  if (entry.style === 'scene') {
-    return `<p class="KP" style="color: ${entry.color};">${escapeText(entry.charName)}</p>
-${entry.paragraphs.map(renderParagraph).join('\n')}`
-  }
-
-  return `<div class="box">
-    <span class="box-title">${escapeText(entry.charName)}</span>
-    ${entry.paragraphs.map(renderParagraph).join('\n')}
-</div>`
-}
-
-/**
- * ContentParagraph を `<p>` タグに変換する。
- *
- * @param paragraph - 変換対象の段落
- * @returns HTML 文字列
- */
-function renderParagraph(paragraph: ContentParagraph): string {
-  return `<p class="bbb">
-    ${paragraph.tokens.map(renderToken).join('<br>')}
-</p>`
-}
-
-/**
- * ContentToken を span タグに変換する。
- * highlight の種別に応じてグラデーション背景を付与する。
- *
- * @param token - 変換対象のトークン
- * @returns HTML 文字列
- */
-// token.content は CCFOLIA の innerHTML をそのまま通す（意図的・escapeText 不可）。
-// エスケープすると CCFOLIA のインライン書式（<b> 等）が壊れる。
-function renderToken(token: ContentToken): string {
-  if (token.highlight === 'success') {
-    return `<span style="background: ${SUCCESS_HIGHLIGHT};">${token.content}</span>`
-  }
-
-  if (token.highlight === 'failure') {
-    return `<span style="background: ${FAILURE_HIGHLIGHT};">${token.content}</span>`
-  }
-
-  return `<span>${token.content}</span>`
-}
-
-/**
  * 設定値を埋め込んだ `<style>` タグ文字列を生成する。
  *
  * @param settings - フレーム色・背景色・文字色などの整形設定
@@ -165,7 +147,9 @@ function renderToken(token: ContentToken): string {
 function buildStyle(settings: LogmakeSettings): string {
   const frame = sanitizeCssColor(settings.frameColor)
   const name = sanitizeCssColor(settings.nameColor)
-  const back = sanitizeCssColor(settings.backColor)
+  const back = settings.darkMode ? DARK_BACK_COLOR : LIGHT_BACK_COLOR
+  const textColor = settings.darkMode ? '#d0d0d0' : '#333333'
+  const tabBg = settings.darkMode ? 'rgba(200,200,200,0.06)' : 'rgba(127,127,127,0.1)'
   return `<style>
   @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
   @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
@@ -174,7 +158,9 @@ function buildStyle(settings: LogmakeSettings): string {
   }
   body {
     background-color: ${frame};
+    color: ${textColor};
     font-family: 'Hiragino Sans', sans-serif;
+    writing-mode: ${settings.writingMode === 'vertical' ? 'vertical-rl' : 'horizontal-tb'};
   }
   .header{
     background-color: ${frame};
@@ -222,9 +208,9 @@ function buildStyle(settings: LogmakeSettings): string {
   .tab {
     position: relative;
     margin: 1.5rem 0;
-    padding: .5rem 1.5rem .5rem 1rem;
+    padding: 1rem 1.5rem 1rem 1rem;
     box-sizing: border-box;
-    background: rgba(127, 127, 127, 0.1);
+    background: ${tabBg};
     overflow-wrap: break-word;
   }
   .box {
@@ -289,6 +275,19 @@ function buildStyle(settings: LogmakeSettings): string {
       margin: 5.5rem .6rem .6rem;
     }
   }
+  ${settings.writingMode === 'vertical' ? `
+  .header {
+    writing-mode: horizontal-tb;
+  }
+  details[open] {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  details summary {
+    flex-shrink: 0;
+  }` : ''}
   </style>`
 }
 

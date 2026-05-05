@@ -1,9 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=BIZ+UDGothic:wght@400;700&display=swap');
 
+:global(:root) {
+  --clr-body-bg:            #6b8e23;
+  --clr-surface:            #ffffff;
+  --clr-surface-alt:        #f7f7f7;
+  --clr-text:               #222222;
+  --clr-text-muted:         #63734e;
+  --clr-label:              #314125;
+  --clr-border:             #6b8e23;
+  --clr-btn-secondary:      #edf3df;
+  --clr-btn-secondary-hover: #ddefc5;
+  --clr-details-border:     #e6ece3;
+  --clr-details-accent:     #6b8e23;
+  --clr-input-border:       #888888;
+  --clr-input-bg:           #ffffff;
+}
+
+:global([data-theme='dark']) {
+  /* --clr-body-bg / --clr-border / --clr-details-accent は root と同値 (#6b8e23) のため上書きしない */
+  --clr-surface:            #2d2d2d;
+  --clr-surface-alt:        #383838;
+  --clr-text:               #e0e0e0;
+  --clr-text-muted:         #a0a0a0;
+  --clr-label:              #8ec86a;
+  --clr-btn-secondary:      #3a3a3a;
+  --clr-btn-secondary-hover: #484848;
+  --clr-details-border:     #4a4a4a;
+  --clr-input-border:       #666666;
+  --clr-input-bg:           #2d2d2d;
+}
+
 :global(body) {
   -webkit-text-size-adjust: 100%;
-  background-color: #6b8e23;
-  color: #222;
+  background-color: var(--clr-body-bg);
+  color: var(--clr-text);
   font-family: sans-serif;
 }
 
@@ -27,8 +57,8 @@
 .box5 {
   padding: 1.5rem;
   margin: 1rem;
-  border: double 5px #6b8e23;
-  background-color: #fff;
+  border: double 5px var(--clr-border);
+  background-color: var(--clr-surface);
 }
 
 .alert {
@@ -49,10 +79,48 @@
   padding-left: 1.25rem;
 }
 
-.status {
-  margin-top: 1rem;
-  padding: 0.5rem 0;
-  color: #222;
+/* ---- ページタブ ---- */
+
+.pageTabs {
+  display: flex;
+  border-bottom: 2px solid var(--clr-border);
+  margin-top: 1.5rem;
+  gap: 0;
+}
+
+.pageTab {
+  padding: 0.45rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--clr-text-muted);
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.pageTab:hover:not(:disabled) {
+  color: var(--clr-text);
+  background: var(--clr-surface-alt);
+}
+
+.pageTab:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pageTabActive {
+  color: var(--clr-details-accent);
+  border-bottom-color: var(--clr-details-accent);
+  font-weight: 700;
+  background: var(--clr-surface-alt);
+}
+
+.pageTabContent {
+  padding-top: 0.75rem;
 }
 
 @media screen and (max-width: 480px) {

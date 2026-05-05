@@ -1,3 +1,7 @@
+import { useMemo, type ReactNode } from 'react'
+
+import { ColorPickerInput } from '@/logmake/components/ColorPickerInput'
+import { sortCharacterConfigs } from '@/logmake/lib/sortCharacters'
 import formStyles from '@/logmake/styles/forms.module.css'
 import type { CharacterConfig, CharacterStyle } from '@/logmake/types'
 
@@ -5,38 +9,54 @@ interface CharacterSettingsProps {
   characters: Record<string, CharacterConfig>
   onStyleChange: (name: string, style: CharacterStyle) => void
   onColorChange: (name: string, color: string) => void
+  sampleButton?: ReactNode
 }
 
-/**
- * キャラクター名・カラー・表示スタイルの設定フォームコンポーネント。
- *
- * @param props.characters - キャラクター設定のレコード
- * @param props.onStyleChange - 表示スタイル変更ハンドラ
- * @param props.onColorChange - カラー変更ハンドラ
- */
 export function CharacterSettings({
   characters,
   onStyleChange,
   onColorChange,
+  sampleButton,
 }: CharacterSettingsProps) {
+  const sortedCharacters = useMemo(
+    () => sortCharacterConfigs(characters),
+    [characters]
+  )
+
   return (
-    <table className={formStyles.settingsTable}>
-      <tbody>
-        <tr>
-          <th align="left" colSpan={3}>
-            ＜キャラクタ設定＞
-          </th>
-        </tr>
-      {Object.keys(characters).length === 0 ? (
-          <tr>
-            <td>ログを読み込むとキャラクタ設定が表示されます。</td>
-          </tr>
+    <div className={formStyles.settingsSection} style={{ maxWidth: 'min(100%, 560px)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className={formStyles.sectionTitle}>＜キャラクタ設定＞</div>
+        {sampleButton}
+      </div>
+      {sortedCharacters.length === 0 ? (
+        <p className={formStyles.emptyState}>
+          ログを読み込むとキャラクタ設定が表示されます。
+        </p>
       ) : (
-          Object.values(characters).map((character) => (
-            <tr key={character.name}>
-              <td>{character.name}</td>
-              <td>
-                <div className={formStyles.sampleOptions}>
+        <div className={formStyles.settingsGrid}>
+          <div className={`${formStyles.settingsGridHeader} ${formStyles.settingsGridChar}`}>
+            <span className={formStyles.colCharName}>キャラクタ名</span>
+            <span className={formStyles.colColor}>色</span>
+            <span className={formStyles.colStyle}>種別</span>
+          </div>
+          {sortedCharacters.map((character) => (
+            <div key={character.name} className={`${formStyles.settingsGridRow} ${formStyles.settingsGridChar}`}>
+              <span
+                className={formStyles.colCharName}
+                title={character.name}
+              >
+                {character.name}
+              </span>
+              <span className={formStyles.colColor}>
+                <ColorPickerInput
+                  ariaLabel={`${character.name} color`}
+                  value={character.color}
+                  onChange={(v) => onColorChange(character.name, v)}
+                />
+              </span>
+              <span className={formStyles.colStyle}>
+                <span className={formStyles.sampleOptions}>
                   <input
                     checked={character.style === 'character'}
                     id={`${character.name}-char`}
@@ -61,24 +81,12 @@ export function CharacterSettings({
                     onChange={() => onStyleChange(character.name, 'scene')}
                   />
                   <label htmlFor={`${character.name}-scene`}>場面</label>
-              </div>
-              </td>
-
-              <td>
-              <input
-                aria-label={`${character.name} color`}
-                className={formStyles.colorInput}
-                type="color"
-                value={character.color}
-                onChange={(event) =>
-                  onColorChange(character.name, event.currentTarget.value)
-                }
-              />
-              </td>
-            </tr>
-          ))
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
       )}
-      </tbody>
-    </table>
+    </div>
   )
 }
