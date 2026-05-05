@@ -47,6 +47,12 @@ const STATUS_TARGET_NAMES = new Set([
   'ショックロール',
   '知識',
 ])
+const ABILITY_TARGET_NAMES = ['STR', 'CON', 'POW', 'DEX', 'APP', 'SIZ', 'INT', 'EDU'] as const
+const ABILITY_TARGET_PATTERN = ABILITY_TARGET_NAMES.join('|')
+const ABILITY_FACTOR_PATTERN = `(?:${ABILITY_TARGET_PATTERN})(?:[*×]\\d+)?`
+const ABILITY_EXPRESSION_REGEX = new RegExp(
+  `^(?:${ABILITY_FACTOR_PATTERN})(?:\\+(?:${ABILITY_FACTOR_PATTERN}))*$`
+)
 
 /**
  * CoC 汎用のダイスイベント抽出関数を生成するファクトリ。
@@ -250,7 +256,8 @@ function normalizeSkillPart(
 }
 
 function isStatusTargetName(targetName: string): boolean {
-  return STATUS_TARGET_NAMES.has(targetName.replace(/\s+/g, '').toUpperCase())
+  const normalized = targetName.replace(/\s+/g, '').toUpperCase()
+  return STATUS_TARGET_NAMES.has(normalized) || ABILITY_EXPRESSION_REGEX.test(normalized)
 }
 
 /**

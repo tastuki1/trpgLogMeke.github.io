@@ -107,4 +107,39 @@ describe('parseCoc7DiceToken', () => {
     ).toBeUndefined()
     expect(parseCoc7DiceToken('RESB&lt;=50 体力 ＞ 30 ＞ 成功')).toBeUndefined()
   })
+
+  it('marks status=true for plain stat name (exact match)', () => {
+    const result = parseCoc7DiceToken('CC&lt;=65 STR ＞ 42 ＞ 成功')
+    expect(result?.status).toBe(true)
+  })
+
+  it.each(['STR*5', 'STR * 4', 'STR×3'])(
+    'marks status=true for stat multiplier expression (%s)',
+    (targetName) => {
+      const result = parseCoc7DiceToken(`CC&lt;=65 ${targetName} ＞ 42 ＞ 成功`)
+      expect(result?.status).toBe(true)
+    }
+  )
+
+  it.each(['STR+DEX', 'STR + DEX'])(
+    'marks status=true for stat addition expression (%s)',
+    (targetName) => {
+      const result = parseCoc7DiceToken(`CC&lt;=75 ${targetName} ＞ 50 ＞ 成功`)
+      expect(result?.status).toBe(true)
+    }
+  )
+
+  it('marks status=false for a Japanese label containing a stat abbreviation', () => {
+    const result = parseCoc7DiceToken('CC&lt;=60 筋力(STR) ＞ 33 ＞ 成功')
+    expect(result?.status).toBe(false)
+  })
+
+  it.each([
+    '【目星】 (1D100&lt;=50) ボーナス・ペナルティダイス[0] ＞ 30, 30 ＞ 30',
+    'STRATEGY',
+    'STR技能',
+  ])('marks status=false for non-status target (%s)', (targetName) => {
+    const result = parseCoc7DiceToken(`CC&lt;=50 ${targetName} ＞ 30 ＞ 成功`)
+    expect(result?.status).toBe(false)
+  })
 })
