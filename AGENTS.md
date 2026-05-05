@@ -56,6 +56,7 @@ pnpm lint         # ESLint
 形式: `<type>: <subject>` / type: `feat` / `fix` / `refactor` / `docs` / `test` / `chore`
 
 **テストファースト原則**（バグ修正・リファクタリング時）:
+
 1. 失敗するテストを先に書く
 2. テストが通るように実装を変更する
 3. テスト＋実装を 1 コミットにまとめる（`fix:` だけ・`test:` だけに分けない）
@@ -80,3 +81,5 @@ pnpm lint         # ESLint
 
 - **`parseLogHtml` はブラウザ専用**（`DOMParser` 依存）
   Node.js 環境でテストする場合は jsdom が必要（vitest.config の `environment: 'jsdom'` で対応済み）。
+
+- 人間向けのハーネスとして、実装前にユーザーの理解や意図に不確実性が残る場合は確認する。質問ツールが利用可能な Plan mode では質問ツールを優先し、利用できないモードでは通常の確認質問で代替する。

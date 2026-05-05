@@ -86,6 +86,24 @@ export default [
     // React コンポーネントは Props 型と JSX の戻り型が自明なため緩和
     files: ['**/*.tsx'],
     rules: {
+      'jsdoc/require-jsdoc': [
+        'warn',
+        {
+          publicOnly: true,
+          require: {
+            FunctionDeclaration: false,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
+          },
+          contexts: [
+            'TSInterfaceDeclaration',
+            'TSTypeAliasDeclaration',
+          ],
+        },
+      ],
+      'jsdoc/require-description': ['warn', {
+        contexts: ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration'],
+      }],
       'jsdoc/require-param': 'off',
       'jsdoc/require-returns': 'off',
     },
