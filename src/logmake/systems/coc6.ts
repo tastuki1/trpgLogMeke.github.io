@@ -1,7 +1,45 @@
+import rawDefaultSkillValues from '@/logmake/systems/data/defaultSkillValues6th.json'
 import { createLogSourceNormalizer } from '@/logmake/lib/normalizeSourceHtml'
-import { parseCoc6DiceToken } from '@/logmake/systems/coc/coc6DiceExtractor'
-import { coc6Growth } from '@/logmake/systems/coc/coc6Growth'
+import { createCocDiceExtractor } from '@/logmake/systems/coc/cocDiceExtractor'
+import { createCocGrowth } from '@/logmake/systems/coc/cocGrowth'
 import type { LogmakeSystem } from '@/logmake/systems/types'
+
+/** CoC6版で使用する技能の表記ゆれを正規名に統一するエイリアスマップ */
+const SKILL_ALIASES: Record<string, string> = {
+  ma: 'マーシャルアーツ',
+  パンチ: 'こぶし（パンチ）',
+  こぶし: 'こぶし（パンチ）',
+  こぶしパンチ: 'こぶし（パンチ）',
+  'こぶし（パンチ）': 'こぶし（パンチ）',
+  マーシャルアーツ: 'マーシャルアーツ',
+}
+
+const parseCoc6DiceToken = createCocDiceExtractor({
+  commandPrefix: '(?:CCB|CC|RESB|RES|CBRB|CBR)',
+  optionRegex: /(?:CCB|CC|RESB|RES|CBRB|CBR)[-+0-9()]*&lt;=\d+([crhe])/i,
+  combineCommandPattern: /^CBRB?\((\d+)\s*,\s*(\d+)\)/i,
+  skillAliases: SKILL_ALIASES,
+})
+
+const coc6Growth = createCocGrowth({
+  labels: [
+    'クリティカル',
+    'スペシャル',
+    'ファンブル',
+    '故障',
+    '初期値成功',
+    '通常成功',
+    '通常失敗',
+  ],
+  rawDefaultSkillValues,
+  successRegex: /スペシャル|成功/,
+  classifyRefinedSuccess({ outcome }) {
+    if (/スペシャル/.test(outcome)) {
+      return 'スペシャル'
+    }
+    return '通常成功'
+  },
+})
 
 /** CoC6版のゲームシステム定義 */
 export const COC6_SYSTEM: LogmakeSystem = {

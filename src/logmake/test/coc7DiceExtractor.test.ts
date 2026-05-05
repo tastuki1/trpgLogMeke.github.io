@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseCoc7DiceToken } from '@/logmake/systems/coc/coc7DiceExtractor'
+import { COC7_SYSTEM } from '@/logmake/systems/coc7'
+
+const parseCoc7DiceToken = COC7_SYSTEM.log.parseToken
 
 describe('parseCoc7DiceToken', () => {
   it('returns undefined for non-dice fragments', () => {
