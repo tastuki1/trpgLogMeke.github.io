@@ -1,7 +1,13 @@
 import { defineConfig } from '@playwright/test'
+import { defineBddConfig } from 'playwright-bdd'
+
+const bddTestDir = defineBddConfig({
+  features: 'specs/features/**/*.feature',
+  steps: 'tests/bdd/steps/**/*.ts',
+  outputDir: '.features-gen',
+})
 
 export default defineConfig({
-  testDir: './e2e',
   use: {
     baseURL: 'http://127.0.0.1:4173',
     headless: true,
@@ -11,4 +17,14 @@ export default defineConfig({
     port: 4173,
     reuseExistingServer: !process.env.CI,
   },
+  projects: [
+    {
+      name: 'bdd',
+      testDir: bddTestDir,
+    },
+    {
+      name: 'e2e-legacy',
+      testDir: './e2e',
+    },
+  ],
 })

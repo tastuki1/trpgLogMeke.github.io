@@ -27,8 +27,9 @@ src/
     ├── lib/                     # ビジネスロジック（React 非依存）
     │   ├── parseLogHtml.ts      # ※DOMParser 依存のため例外
     │   ├── analyzeGrowth.ts / buildOutputModel.ts
-    │   ├── buildOutputHtml.ts   # sanitizeCssColor() で色値を検証
+    │   ├── buildOutputHtml.ts
     │   ├── buildGrowthSummaryText.ts
+    │   ├── htmlUtils.ts         # escapeText / sanitizeCssColor
     │   └── utils/downloadFile.ts
     ├── hooks/useLogmakePageState.ts  # 状態管理の中心
     ├── components/features/     # UI コンポーネント
@@ -72,6 +73,26 @@ pnpm lint         # ESLint
 - ゲームシステムは `LogmakeSystem` インターフェース経由で抽象化（`systems/types.ts`）
 - TypeScript strict mode・`any` 禁止
 
+## テスト戦略（3層）
+
+| 層   | ツール              | 対象                            | 場所                             |
+| ---- | ------------------- | ------------------------------- | -------------------------------- |
+| BHV  | playwright-bdd      | E2E ユーザーシナリオ（Gherkin） | specs/features/                  |
+| INV  | fast-check + vitest | 純粋関数の不変条件              | src/logmake/test/properties/     |
+| ERR  | AGENTS.md 文書化    | 意図的な挙動・実装上の注意点    | このファイル（既知の注意点欄）   |
+
+新機能は `.feature` を先に書き、`pnpm bddgen` で失敗確認してから実装する。
+`specs/features/` が正規の仕様ドキュメント。`tests/bdd/steps/` がテスト実装。
+
+```bash
+pnpm bddgen          # .feature からテストコード生成
+pnpm test:bdd        # BDD シナリオ実行
+pnpm test:unit       # ユニットテスト + プロパティテスト
+pnpm test:all        # 全テスト
+```
+
+---
+
 ## 既知の設計上の注意点
 
 - **`renderToken` の `token.content` はエスケープしない（意図的）**
@@ -83,3 +104,7 @@ pnpm lint         # ESLint
   Node.js 環境でテストする場合は jsdom が必要（vitest.config の `environment: 'jsdom'` で対応済み）。
 
 - 人間向けのハーネスとして、実装前にユーザーの理解や意図に不確実性が残る場合は確認する。質問ツールが利用可能な Plan mode では質問ツールを優先し、利用できないモードでは通常の確認質問で代替する。
+
+- **`escapeText` は呼び出し回数だけエスケープを適用する（冪等でない）**
+  生ログテキストのみに適用すること。すでにエスケープ済みの文字列への重複適用は呼び出し側が避ける。
+  `escapeText` は `src/logmake/lib/htmlUtils.ts` に独立モジュールとして配置されている。
