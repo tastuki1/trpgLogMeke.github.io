@@ -1,0 +1,882 @@
+import {
+  DARK_BACK_COLOR,
+  LIGHT_BACK_COLOR,
+  FAILURE_HIGHLIGHT,
+  SUCCESS_HIGHLIGHT,
+  isPrimaryTab,
+} from '@/logmake/lib/defaults'
+import { buildOutputModel } from '@/logmake/lib/buildOutputModel'
+import { escapeText, sanitizeCssColor } from '@/logmake/lib/htmlUtils'
+import type {
+  CharacterStyle,
+  ContentParagraph,
+  ContentToken,
+  LogmakeSettings,
+  OutputModel,
+  OutputSection,
+  OutputSpeakerEntry,
+  ParsedLog,
+} from '@/logmake/types'
+
+const COMPARISON_STYLE_OVERRIDES: Record<string, CharacterStyle> = {
+  KP: 'scene',
+  GM: 'scene',
+  話者なし: 'scene',
+  淡色の探索者: 'character',
+  鮮烈な探索者: 'character',
+  '場面：地下室前': 'scene',
+}
+
+const NAMELESS_NARRATION_NAMES = new Set(['KP', 'GM', '話者なし'])
+
+/**
+ * 比較fixtureの意図に合わせて、一部キャラクター種別だけを比較用に固定する。
+ *
+ * @param parsedLog - 比較fixtureのパース結果
+ * @returns 見た目比較用の出力モデル
+ */
+export function buildVisualComparisonOutputModel(
+  parsedLog: ParsedLog,
+): OutputModel {
+  const characters = { ...parsedLog.characters }
+
+  for (const [name, style] of Object.entries(COMPARISON_STYLE_OVERRIDES)) {
+    const character = characters[name]
+    if (character) {
+      characters[name] = { ...character, style }
+    }
+  }
+
+  return useStableComparisonTabClasses(
+    buildOutputModel(parsedLog, {
+      tabs: parsedLog.tabs,
+      characters,
+    }),
+  )
+}
+
+function useStableComparisonTabClasses(outputModel: OutputModel): OutputModel {
+  const classByTabName = new Map<string, string>()
+  let index = 0
+
+  for (const section of outputModel.sections) {
+    if (!isPrimaryTab(section.tabName) && !classByTabName.has(section.tabName)) {
+      classByTabName.set(section.tabName, `log-tab-${index}`)
+      index += 1
+    }
+  }
+
+  return {
+    sections: outputModel.sections.map((section) => ({
+      ...section,
+      tabVisibilityClass: classByTabName.get(section.tabName) ?? '',
+    })),
+    toggles: outputModel.toggles.map((toggle) => {
+      const tabVisibilityClass =
+        classByTabName.get(toggle.name) ?? toggle.tabVisibilityClass
+      return {
+        ...toggle,
+        inputId: `${tabVisibilityClass}-toggle`,
+        tabVisibilityClass,
+      }
+    }),
+  }
+}
+
+/**
+ * 人物名の後ろに短いキャラクター色ラインを付ける比較用HTMLを生成する。
+ *
+ * @param outputModel - 比較対象の出力モデル
+ * @param settings - 比較HTMLの表示設定
+ * @returns 名前後ろライン案の比較用HTML
+ */
+export function buildSpeakerAfterLineComparisonHtml(
+  outputModel: OutputModel,
+  settings: LogmakeSettings,
+): string {
+  return injectComparisonStyle(
+    buildStructuredComparisonHtml(outputModel, settings),
+    `${buildBodyBaseTextStyle(settings)}${buildSpeakerAfterLineStyle()}`,
+  )
+}
+
+/**
+ * 人物本文に薄いキャラクター色ガイドを付ける比較用HTMLを生成する。
+ *
+ * @param outputModel - 比較対象の出力モデル
+ * @param settings - 比較HTMLの表示設定
+ * @returns 本文ガイド案の比較用HTML
+ */
+export function buildSpeakerBodyGuideComparisonHtml(
+  outputModel: OutputModel,
+  settings: LogmakeSettings,
+): string {
+  return injectComparisonStyle(
+    buildStructuredComparisonHtml(outputModel, settings),
+    `${buildBodyBaseTextStyle(settings)}${buildSpeakerBodyGuideStyle()}`,
+  )
+}
+
+/**
+ * 第一候補の要素をまとめた比較用HTMLを生成する。
+ *
+ * @param outputModel - 比較対象の出力モデル
+ * @param settings - 比較HTMLの表示設定
+ * @returns 統合候補案の比較用HTML
+ */
+export function buildCandidateCombinedComparisonHtml(
+  outputModel: OutputModel,
+  settings: LogmakeSettings,
+): string {
+  const html = buildStructuredComparisonHtml(outputModel, settings)
+  const markedHtml = softenHighlightBackgrounds(html, settings.darkMode)
+  return injectComparisonStyle(
+    markedHtml,
+    `${buildBodyBaseTextStyle(settings)}${buildSpeakerUnderlineStyle()}${buildNarrationQuietStyle(settings)}${buildInfoBlockStyle(settings)}`,
+  )
+}
+
+function buildStructuredComparisonHtml(
+  outputModel: OutputModel,
+  settings: LogmakeSettings,
+): string {
+  const tabControls = outputModel.toggles
+    .map(renderStructuredToggle)
+    .join('\n')
+  const content = outputModel.sections
+    .map((section, index) => renderStructuredSection(section, index))
+    .join('\n')
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>${escapeText(settings.logFileName)}</title>
+        <script type="text/javascript">
+            function toggleLogTab(obj, name) {
+                const nodes = document.getElementsByClassName(name)
+                for (let i = 0; i < nodes.length; i += 1) {
+                    nodes[i].style.display = obj.checked ? 'block' : 'none'
+                }
+            }
+        </script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        ${buildStructuredStyle(settings, outputModel)}
+    </head>
+    <body>
+        <div class="header">
+            <h1>${escapeText(settings.title)}</h1>
+            <details>
+                <summary>タブ表示</summary>
+                <div class="log-tab-controls">
+                    ${tabControls}
+                </div>
+            </details>
+        </div>
+        <main class="log-frame">
+            ${content}
+        </main>
+    </body>
+</html>`
+}
+
+function renderStructuredToggle(tab: OutputModel['toggles'][number]): string {
+  return `
+                <label for="${tab.inputId}">
+                    <input
+                        class="${tab.tabVisibilityClass}-control"
+                        type="checkbox"
+                        id="${tab.inputId}"
+                        checked="checked"
+                        onchange="toggleLogTab(this, '${tab.tabVisibilityClass}')"
+                    />
+                    <span>${escapeText(tab.name)}</span>
+                </label>`
+}
+
+function renderStructuredSection(
+  section: OutputSection,
+  index: number,
+): string {
+  const sectionTitleId = `log-section-${index}-title`
+  const isPrimary = isPrimaryTab(section.tabName)
+  const className = isPrimary
+    ? 'log-section log-section--primary'
+    : `log-section log-section--tab ${section.tabVisibilityClass}`
+  const title = isPrimary ? '' : ` title="${escapeText(section.tabName)}"`
+  const tabNameLabel = isPrimary
+    ? ''
+    : `    <span class="log-section-tab-name" aria-hidden="true">${escapeText(section.tabName)}</span>\n`
+
+  return `<section class="${className}"${title} aria-labelledby="${sectionTitleId}">
+    <h2 id="${sectionTitleId}" class="log-section-title">${escapeText(section.tabName)}</h2>
+${tabNameLabel}    ${section.entries.map(renderStructuredSpeaker).join('\n')}
+</section>`
+}
+
+function renderStructuredSpeaker(entry: OutputSpeakerEntry): string {
+  const speakerColor = sanitizeCssColor(entry.color)
+  const messages = `<div class="log-messages">
+    ${entry.paragraphs.map(renderStructuredParagraph).join('\n')}
+</div>`
+
+  if (entry.style === 'character') {
+    return `<div class="log-entry log-entry--speaker" style="--log-speaker-color: ${speakerColor};">
+    <span class="log-speaker">${escapeText(entry.charName)}</span>
+    ${messages}
+</div>`
+  }
+
+  if (entry.style === 'scene') {
+    if (NAMELESS_NARRATION_NAMES.has(entry.charName)) {
+      return `<div class="log-entry log-entry--scene log-entry--narration">
+    ${messages}
+</div>`
+    }
+
+    return `<div class="log-entry log-entry--scene" style="--log-speaker-color: ${speakerColor};">
+    <h3 class="log-scene">${escapeText(entry.charName)}</h3>
+    ${messages}
+</div>`
+  }
+
+  return `<div class="log-entry log-entry--info">
+    <h4 class="log-info-title">${escapeText(entry.charName)}</h4>
+    ${messages}
+</div>`
+}
+
+function renderStructuredParagraph(paragraph: ContentParagraph): string {
+  return `<p class="log-message">
+    ${paragraph.tokens.map(renderStructuredToken).join('<br>')}
+</p>`
+}
+
+function renderStructuredToken(token: ContentToken): string {
+  if (token.highlight === 'success') {
+    return `<span style="background: ${SUCCESS_HIGHLIGHT};">${token.content}</span>`
+  }
+  if (token.highlight === 'failure') {
+    return `<span style="background: ${FAILURE_HIGHLIGHT};">${token.content}</span>`
+  }
+  return `<span>${token.content}</span>`
+}
+
+function buildStructuredStyle(
+  settings: LogmakeSettings,
+  outputModel: OutputModel,
+): string {
+  const frame = sanitizeCssColor(settings.frameColor)
+  const name = sanitizeCssColor(settings.nameColor)
+  const back = settings.darkMode ? DARK_BACK_COLOR : LIGHT_BACK_COLOR
+  const textColor = settings.darkMode ? '#d0d0d0' : '#333333'
+  const tabBg = settings.darkMode
+    ? 'rgba(200,200,200,0.06)'
+    : 'rgba(127,127,127,0.1)'
+  const tabColorRules = buildTabColorRules(outputModel)
+
+  return `<style>
+  @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+  @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
+  ${tabColorRules}
+  html {
+    font-size: 16px;
+  }
+  body {
+    background-color: ${frame};
+    color: ${textColor};
+    font-family: 'Hiragino Sans', sans-serif;
+    writing-mode: ${settings.writingMode === 'vertical' ? 'vertical-rl' : 'horizontal-tb'};
+  }
+  .header{
+    background-color: ${frame};
+    width:100%;
+    position: fixed;
+    z-index: 999;
+    top:0;
+    left:0;
+  }
+  details {
+    background-color: ${frame};
+    padding: .3rem;
+    margin: 0;
+  }
+  summary {
+    padding-left: 3rem;
+    margin: 0;
+    color: ${name};
+  }
+  h1 {
+    padding: .3rem .3rem .3rem 3rem;
+    margin: 0;
+    color: ${name};
+    font-family: 'New Tegomin', serif;
+  }
+  .log-tab-controls{
+    padding-left: 3rem;
+    color: ${name};
+  }
+  .log-tab-controls label{
+    display: inline-block;
+    margin-right: .75rem;
+  }
+  .log-tab-controls input {
+    accent-color: var(--log-tab-color);
+  }
+  .log-frame {
+    padding: 2rem;
+    margin: 6rem 2rem 2rem;
+    border: double 5px ${frame};
+    background-color: ${back};
+  }
+  .log-message {
+    margin: 0;
+    padding: .5rem;
+    text-align: left;
+    word-break: normal;
+    word-break: auto-phrase;
+    overflow-wrap: anywhere;
+  }
+  .log-section {
+    position: relative;
+  }
+  .log-section--primary {
+    position: relative;
+  }
+  .log-section--tab {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 1.5rem .75rem 1rem;
+    box-sizing: border-box;
+    background: ${tabBg};
+    border-inline-start: 3px solid var(--log-tab-color);
+    overflow-wrap: break-word;
+  }
+  .log-section-tab-name {
+    position: absolute;
+    top: .35rem;
+    right: .75rem;
+    max-width: 40%;
+    color: var(--log-tab-color);
+    font-size: .75rem;
+    font-weight: bold;
+    line-height: 1.2;
+    opacity: .45;
+    pointer-events: none;
+    text-align: right;
+    writing-mode: horizontal-tb;
+    word-break: normal;
+    word-break: auto-phrase;
+    overflow-wrap: anywhere;
+  }
+  .log-section-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .log-entry--info {
+    position: relative;
+    margin: 2.5rem 1.25rem;
+    padding: 1rem 1.5rem .5rem 1rem;
+    border: solid 3px #888888;
+    border-radius: 8px;
+    background: ${back};
+    line-height: 1.5;
+  }
+  .log-info-title {
+    position: absolute;
+    display: inline-block;
+    top: -2.5rem;
+    left: .5rem;
+    right: auto;
+    padding: .5rem;
+    line-height: 1;
+    background: ${back};
+    color: #888888;
+    font-weight: bold;
+    font-size: 1rem;
+    word-break: normal;
+    word-break: auto-phrase;
+    overflow-wrap: anywhere;
+  }
+  .log-entry--info .log-message {
+    margin: 0;
+    color: #888888;
+  }
+  .log-speaker {
+    display: block;
+    color: var(--log-speaker-color);
+    font-weight: bold;
+    word-break: normal;
+    word-break: auto-phrase;
+    overflow-wrap: anywhere;
+  }
+  .log-entry--speaker {
+    margin: 1.5rem 1rem 1.5rem 0.5rem;
+  }
+  .log-entry--speaker .log-message {
+    color: var(--log-speaker-color);
+  }
+  .log-scene {
+    margin: 0 0 0.25rem .5rem;
+    color: var(--log-speaker-color);
+    word-break: normal;
+    word-break: auto-phrase;
+    overflow-wrap: anywhere;
+  }
+  .log-entry--narration {
+    margin: 1rem 1.25rem;
+    color: ${textColor};
+    opacity: .9;
+  }
+  .log-entry--narration .log-message {
+    padding-inline-start: 1rem;
+    border-inline-start: 2px solid rgba(127,127,127,0.35);
+  }
+  @media screen and (max-width: 480px){
+    html {
+      font-size: 14px;
+    }
+    h1 {
+      padding: .2rem .2rem .2rem 1.5rem;
+      font-size: 27px;
+    }
+    .log-tab-controls{
+      padding-left: 1.5rem;
+    }
+    details {
+      padding: .2rem;
+    }
+    summary {
+      padding-left: 1.5rem;
+    }
+    main {
+      width: 100%;
+    }
+    .log-frame{
+      padding: 0.8rem;
+      margin: 5.5rem .6rem .6rem;
+    }
+  }
+  ${
+    settings.writingMode === 'vertical'
+      ? `
+  .header {
+    writing-mode: horizontal-tb;
+  }
+  details[open] {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  details summary {
+    flex-shrink: 0;
+  }
+  .log-info-title {
+    top: -1rem;
+    left: auto;
+    right: -1rem;
+  }`
+      : ''
+  }
+  </style>`
+}
+
+function buildTabColorRules(outputModel: OutputModel): string {
+  const colors = new Map<string, string>()
+  for (const section of outputModel.sections) {
+    if (section.tabVisibilityClass) {
+      colors.set(section.tabVisibilityClass, sanitizeCssColor(section.tabColor))
+    }
+  }
+  for (const toggle of outputModel.toggles) {
+    colors.set(toggle.tabVisibilityClass, sanitizeCssColor(toggle.color))
+  }
+
+  return Array.from(colors.entries())
+    .map(
+      ([className, color]) =>
+        `.${className} { --log-tab-color: ${color}; }\n  .${className}-control { --log-tab-color: ${color}; }`,
+    )
+    .join('\n  ')
+}
+
+function buildBodyBaseTextStyle(settings: LogmakeSettings): string {
+  const textColor = settings.darkMode ? '#d0d0d0' : '#333333'
+  return `
+  /* logmake visual comparison: keep speaker names colored, but read body text in the base color. */
+  .log-entry--speaker .log-message {
+    color: ${textColor};
+  }`
+}
+
+function buildSpeakerAfterLineStyle(): string {
+  return `
+  /* logmake visual comparison: speaker name after-line marker. */
+  .log-entry--speaker .log-speaker {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    max-width: 100%;
+  }
+  .log-entry--speaker .log-speaker::after {
+    content: "";
+    display: inline-block;
+    flex: 0 0 clamp(2rem, 8vw, 4.5rem);
+    border-block-start: 2px solid var(--log-speaker-color);
+    opacity: .48;
+    transform: translateY(.08em);
+  }`
+}
+
+function buildSpeakerUnderlineStyle(): string {
+  return `
+  /* logmake visual comparison: speaker name underline marker. */
+  .log-entry--speaker .log-speaker {
+    display: inline-block;
+    position: relative;
+    padding-block-end: .12rem;
+  }
+  .log-entry--speaker .log-speaker::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-block-end: 2px solid var(--log-speaker-color);
+    opacity: .48;
+  }`
+}
+
+function buildSpeakerBodyGuideStyle(): string {
+  return `
+  /* logmake visual comparison: speaker body guide marker. */
+  .log-entry--speaker .log-message {
+    margin-inline-start: .5rem;
+    padding-inline-start: .75rem;
+    border-inline-start: 2px solid color-mix(in srgb, var(--log-speaker-color) 38%, transparent);
+  }`
+}
+
+function buildNarrationQuietStyle(settings: LogmakeSettings): string {
+  const narrationColor = settings.darkMode ? '#b8b8b8' : '#555555'
+  return `
+  /* logmake visual comparison: narration is quiet text without an extra line marker. */
+  .log-entry--narration {
+    margin: .85rem 1rem .85rem .5rem;
+    color: ${narrationColor};
+    opacity: 1;
+  }
+  .log-entry--narration .log-message {
+    padding-block: .35rem;
+    padding-inline: 0 .5rem;
+    border-inline-start: 0;
+    color: ${narrationColor};
+  }`
+}
+
+function buildInfoBlockStyle(settings: LogmakeSettings): string {
+  const infoColor = settings.darkMode ? '#a8a8a8' : '#707070'
+  return `
+  /* logmake visual comparison: compact and slightly stronger info blocks. */
+  .log-entry--info {
+    margin: 1.5rem 1.25rem 1.25rem;
+    border-color: ${infoColor};
+  }
+  .log-info-title {
+    top: -0.6rem;
+    left: .75rem;
+    right: auto;
+    margin: 0;
+    padding: 0 .45rem;
+    color: ${infoColor};
+  }
+  .log-entry--info .log-message {
+    color: ${infoColor};
+  }
+  .log-section--tab .log-entry--info {
+    margin: .9rem .75rem .75rem;
+  }`
+}
+
+function injectComparisonStyle(html: string, comparisonStyle: string): string {
+  return html.replace('</style>', `${comparisonStyle}\n  </style>`)
+}
+
+/**
+ * 従来表示を基準線として見比べるための比較用HTMLを生成する。
+ *
+ * @param outputModel - 比較対象の出力モデル
+ * @param settings - 比較HTMLの表示設定
+ * @returns 旧表示寄せの比較用HTML
+ */
+export function buildLegacyComparisonHtml(
+  outputModel: OutputModel,
+  settings: LogmakeSettings,
+): string {
+  const tabControls = outputModel.toggles.map(renderLegacyToggle).join('\n')
+  const content = outputModel.sections.map(renderLegacySection).join('\n')
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>${escapeText(settings.logFileName)}</title>
+        <script type="text/javascript">
+            function toggleLogTab(obj, name) {
+                const nodes = document.getElementsByClassName(name)
+                for (let i = 0; i < nodes.length; i += 1) {
+                    nodes[i].style.display = obj.checked ? 'block' : 'none'
+                }
+            }
+        </script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        ${buildLegacyStyle(settings)}
+    </head>
+    <body>
+        <div class="header">
+            <h1>${escapeText(settings.title)}</h1>
+            <details>
+                <summary>タブ表示</summary>
+                <div class="viewCheck">
+                    ${tabControls}
+                </div>
+            </details>
+        </div>
+        <div class="box5">
+            ${content}
+        </div>
+    </body>
+</html>`
+}
+
+function renderLegacyToggle(tab: OutputModel['toggles'][number]): string {
+  return `
+                    <label for="${tab.inputId}">
+                        <input
+                            type="checkbox"
+                            id="${tab.inputId}"
+                            checked="checked"
+                            onchange="toggleLogTab(this, '${tab.tabVisibilityClass}')"
+                            style="accent-color: ${sanitizeCssColor(tab.color)};"
+                        />
+                        <span>${escapeText(tab.name)}</span>
+                    </label>`
+}
+
+function renderLegacySection(section: OutputSection): string {
+  const tabColor = sanitizeCssColor(section.tabColor)
+  const className = isPrimaryTab(section.tabName)
+    ? 'mainBlock'
+    : `tab ${section.tabVisibilityClass}`
+  const style = isPrimaryTab(section.tabName)
+    ? ''
+    : ` style="border-left: 3px solid ${tabColor};"`
+
+  return `<div class="${className}"${style}>
+    ${section.entries.map(renderLegacySpeaker).join('\n')}
+</div>`
+}
+
+function renderLegacySpeaker(entry: OutputSpeakerEntry): string {
+  const speakerColor = sanitizeCssColor(entry.color)
+  const displayName = escapeText(entry.charName)
+  const paragraphs = entry.paragraphs.map(renderLegacyParagraph).join('\n')
+
+  if (entry.style === 'character') {
+    return `<div class="char" style="color: ${speakerColor};">
+    <b>${displayName}</b>
+    ${paragraphs}
+</div>`
+  }
+
+  if (entry.style === 'scene') {
+    return `<div class="scene">
+    <p class="KP" style="color: ${speakerColor};">${displayName}</p>
+    ${paragraphs}
+</div>`
+  }
+
+  return `<div class="box">
+    <span class="box-title">${displayName}</span>
+    ${paragraphs}
+</div>`
+}
+
+function renderLegacyParagraph(paragraph: ContentParagraph): string {
+  return `<p class="bbb">
+    ${paragraph.tokens.map(renderLegacyToken).join('<br>')}
+</p>`
+}
+
+function renderLegacyToken(token: ContentToken): string {
+  if (token.highlight === 'success') {
+    return `<span style="background: ${SUCCESS_HIGHLIGHT};">${token.content}</span>`
+  }
+  if (token.highlight === 'failure') {
+    return `<span style="background: ${FAILURE_HIGHLIGHT};">${token.content}</span>`
+  }
+  return `<span>${token.content}</span>`
+}
+
+function softenHighlightBackgrounds(html: string, isDarkMode: boolean): string {
+  if (!isDarkMode) {
+    return html
+  }
+
+  const successColor = 'rgba(127, 191, 255, 0.72)'
+  const failureColor = 'rgba(255, 127, 127, 0.74)'
+
+  return html
+    .replaceAll(
+      'linear-gradient(transparent 70%, #7fbfff 0%)',
+      `linear-gradient(transparent 70%, ${successColor} 0%)`,
+    )
+    .replaceAll(
+      'linear-gradient(transparent 70%, #ff7f7f 0%)',
+      `linear-gradient(transparent 70%, ${failureColor} 0%)`,
+    )
+}
+
+function buildLegacyStyle(settings: LogmakeSettings): string {
+  const frame = sanitizeCssColor(settings.frameColor)
+  const name = sanitizeCssColor(settings.nameColor)
+  const back = settings.darkMode ? DARK_BACK_COLOR : LIGHT_BACK_COLOR
+  const textColor = settings.darkMode ? '#d0d0d0' : '#333333'
+
+  return `<style>
+  @import url('https://fonts.googleapis.com/css?family=Noto+Sans+JP');
+  @import url('https://fonts.googleapis.com/css2?family=New+Tegomin&family=Sawarabi+Mincho&display=swap');
+  html {
+    font-size: 16px;
+  }
+  body {
+    background-color: ${frame};
+    color: ${textColor};
+    font-family: 'Hiragino Sans', sans-serif;
+  }
+  .header{
+    background-color: ${frame};
+    width:100%;
+    position: fixed;
+    z-index: 999;
+    top:0;
+    left:0;
+  }
+  details {
+    background-color: ${frame};
+    padding: .3rem;
+    margin: 0;
+  }
+  summary {
+    padding-left: 3rem;
+    margin: 0;
+    color: ${name};
+  }
+  h1 {
+    padding: .3rem .3rem .3rem 3rem;
+    margin: 0;
+    color: ${name};
+    font-family: 'New Tegomin', serif;
+  }
+  .viewCheck{
+    padding-left: 3rem;
+    color: ${name};
+  }
+  .viewCheck label{
+    display: inline-block;
+    margin-right: .75rem;
+  }
+  .box5 {
+    padding: 2rem;
+    margin: 6rem 2rem 2rem;
+    border: double 5px ${frame};
+    background-color: ${back};
+  }
+  .box5 p {
+    margin: 0;
+    padding: .5rem;
+    text-align: left;
+  }
+  .tab {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: .5rem .75rem;
+    box-sizing: border-box;
+    background: rgba(127, 127, 127, 0.1);
+    overflow-wrap: break-word;
+  }
+  .box {
+    position: relative;
+    margin: 2rem 1rem;
+    padding: 1rem 1.5rem .5rem 1rem;
+    border: solid 3px #888888;
+    border-radius: 8px;
+    background: ${back};
+    line-height: 1.5;
+  }
+  .box .box-title {
+    position: absolute;
+    display: inline-block;
+    top: -0.6rem;
+    left: .5rem;
+    padding: 0 .5rem;
+    line-height: 1;
+    background: ${back};
+    color: #888888;
+    font-weight: bold;
+  }
+  .box p {
+    margin: 0;
+    color: #888888;
+  }
+  b {
+    display: block;
+  }
+  .bbb {
+    display: block;
+    content: "";
+    margin: 0rem 0.3rem;
+  }
+  .char {
+    margin: 1.5rem 1rem 1.5rem 0.5rem;
+  }
+  .KP {
+    margin-left: .5rem;
+  }
+  @media screen and (max-width: 480px){
+    html {
+      font-size: 14px;
+    }
+    h1 {
+      padding: .2rem .2rem .2rem 1.5rem;
+      font-size: 27px;
+    }
+    .viewCheck{
+      padding-left: 1.5rem;
+    }
+    details {
+      padding: .2rem;
+    }
+    summary {
+      padding-left: 1.5rem;
+    }
+    main {
+      width: 100%;
+    }
+    .box5{
+      padding: 0.8rem;
+      margin: 5.5rem .6rem .6rem;
+    }
+  }
+  </style>`
+}

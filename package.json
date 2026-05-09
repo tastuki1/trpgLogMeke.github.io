@@ -25,7 +25,8 @@
     "test:e2e": "playwright test --project=e2e-legacy",
     "bddgen": "bddgen",
     "test:bdd": "pnpm bddgen && playwright test --project=bdd",
-    "test:all": "pnpm test:unit && pnpm test:bdd"
+    "test:all": "pnpm test:unit && pnpm test:bdd",
+    "logmake:compare-output": "node scripts/logmake/generate-output-comparison.mjs"
   },
   "dependencies": {
     "chart.js": "^4.4.7",
