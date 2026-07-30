@@ -740,7 +740,7 @@
                 var charName, style, color, tabName = ""
                 list = ["system"]
                 ary = []
-                const regex = /<p style="color:(#[0-9a-z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S\n]*?)\s*<\/span>\s+<\/p>/g
+                const regex = /<p style="color:(#[0-9a-zA-Z]{6});">\s+<span> \[(.+)\]<\/span>\s+<span>(.*?)<\/span> \:\s+<span>\s+([\s\S\n]*?)\s*<\/span>\s+<\/p>/g
 
                 try {
                     // マッチング実行
@@ -749,7 +749,7 @@
                     // 各ブロックごとに処理
                     for (const match of matches) {
 
-                        charColor = match[1]                    // キャラクタの色の取得
+                        charColor = match[1].toLowerCase();     // キャラクタの色の取得
                         tabName = this.gettabName(match[2]);    // タブ名の取得
                         charName = match[3]                     // キャラクタ名の取得
                         content = match[4]                      // 内容の取得
